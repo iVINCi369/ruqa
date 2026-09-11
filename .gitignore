@@ -82,3 +82,7 @@ test-repo/
 
 # Rust sidecar build artifacts
 native/iroh-bridge/target/
+
+# Рабочие заметки сессий, не часть проекта
+HANDOFF.md
+Claude outputs/

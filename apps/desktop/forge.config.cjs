@@ -4,33 +4,69 @@ const pkg = require('./package.json')
 const appName = pkg.productName ?? pkg.name
 const { isWindows } = require('which-runtime')
 
+/**
+ * makeappx.exe из Windows SDK. Каталог версии в Windows Kits сам по себе ничего
+ * не значит: остовы от старых SDK лежат годами пустыми, а MSIX-макер, получив
+ * версию без тулинга, валит весь make — вместе с уже собранными Setup.exe и zip.
+ * Поэтому версию возвращаем только если makeappx на месте.
+ */
 function getWindowsKitVersion() {
-  const programFiles = process.env['PROGRAMFILES(X86)'] || process.env.PROGRAMFILES
-  if (!programFiles) return undefined
-  const kitsDir = path.join(programFiles, 'Windows Kits')
-  try {
-    for (const kit of fs.readdirSync(kitsDir).sort().reverse()) {
-      const binDir = path.join(kitsDir, kit, 'bin')
-      if (!fs.existsSync(binDir)) continue
-      const version = fs
+  const roots = [
+    process.env['PROGRAMFILES(X86)'],
+    process.env.PROGRAMFILES,
+    'C:\\Program Files (x86)',
+    'C:\\Program Files'
+  ].filter(Boolean)
+
+  for (const root of roots) {
+    const binDir = path.join(root, 'Windows Kits', '10', 'bin')
+    let versions = []
+    try {
+      versions = fs
         .readdirSync(binDir)
         .filter((d) => /^\d+\.\d+\.\d+\.\d+$/.test(d))
         .sort()
-        .pop()
-      if (version) return version
+        .reverse()
+    } catch {
+      continue
     }
-  } catch {
-    return undefined
+    for (const version of versions) {
+      if (fs.existsSync(path.join(binDir, version, 'x64', 'makeappx.exe'))) return version
+    }
   }
+  return undefined
+}
+
+/** Без сертификата maker-msix выписывает временный через pwsh.exe (PowerShell 7). */
+function hasPwsh() {
+  const dirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean)
+  return dirs.some((dir) => fs.existsSync(path.join(dir, 'pwsh.exe')))
+}
+
+const windowsKitVersion = isWindows ? getWindowsKitVersion() : undefined
+const canMakeMsix = Boolean(
+  windowsKitVersion && (process.env.WINDOWS_CERTIFICATE_FILE || hasPwsh())
+)
+if (isWindows && !canMakeMsix) {
+  console.warn(
+    windowsKitVersion
+      ? 'forge: нет ни сертификата (WINDOWS_CERTIFICATE_FILE), ни pwsh.exe — MSIX пропускаем, будут Setup.exe и zip'
+      : 'forge: Windows SDK (makeappx.exe) не найден — MSIX пропускаем, будут Setup.exe и zip'
+  )
 }
 
 async function prunePrebuilds(outputPath, platform, arch) {
   let appRoot
   if (platform === 'darwin') {
     let entries = []
-    try { entries = await fs.promises.readdir(outputPath, { withFileTypes: true }) } catch {}
-    const appEntry = entries.find(e => e.isDirectory() && e.name.endsWith('.app'))
-    if (!appEntry) { console.warn(`prunePrebuilds: no .app found in ${outputPath}`); return }
+    try {
+      entries = await fs.promises.readdir(outputPath, { withFileTypes: true })
+    } catch {}
+    const appEntry = entries.find((e) => e.isDirectory() && e.name.endsWith('.app'))
+    if (!appEntry) {
+      console.warn(`prunePrebuilds: no .app found in ${outputPath}`)
+      return
+    }
     appRoot = path.join(outputPath, appEntry.name, 'Contents', 'Resources', 'app')
   } else {
     appRoot = path.join(outputPath, 'resources', 'app')
@@ -46,32 +82,49 @@ async function prunePrebuilds(outputPath, platform, arch) {
   await pruneTree(appRoot, target, stats)
 
   const mb = (stats.bytes / (1024 * 1024)).toFixed(1)
-  console.log(`prunePrebuilds: pruned ${stats.removed} dirs, kept ${stats.kept} matching '${target}'/-universal, freed ~${mb} MB`)
+  console.log(
+    `prunePrebuilds: pruned ${stats.removed} dirs, kept ${stats.kept} matching '${target}'/-universal, freed ~${mb} MB`
+  )
 }
 
 async function pruneTree(base, target, stats) {
   await pruneOneLevel(path.join(base, 'prebuilds'), target, stats)
   let entries = []
-  try { entries = await fs.promises.readdir(path.join(base, 'node_modules'), { withFileTypes: true }) } catch {}
-  await Promise.all(entries.map(async (entry) => {
-    if (!entry.isDirectory()) return
-    const full = path.join(base, 'node_modules', entry.name)
-    if (entry.name.startsWith('@')) {
-      let subs = []
-      try { subs = await fs.promises.readdir(full, { withFileTypes: true }) } catch {}
-      await Promise.all(subs.map(sub => sub.isDirectory() ? pruneTree(path.join(full, sub.name), target, stats) : null))
-    } else {
-      await pruneTree(full, target, stats)
-    }
-  }))
+  try {
+    entries = await fs.promises.readdir(path.join(base, 'node_modules'), { withFileTypes: true })
+  } catch {}
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (!entry.isDirectory()) return
+      const full = path.join(base, 'node_modules', entry.name)
+      if (entry.name.startsWith('@')) {
+        let subs = []
+        try {
+          subs = await fs.promises.readdir(full, { withFileTypes: true })
+        } catch {}
+        await Promise.all(
+          subs.map((sub) =>
+            sub.isDirectory() ? pruneTree(path.join(full, sub.name), target, stats) : null
+          )
+        )
+      } else {
+        await pruneTree(full, target, stats)
+      }
+    })
+  )
 }
 
 async function pruneOneLevel(dir, target, stats) {
   let entries = []
-  try { entries = await fs.promises.readdir(dir, { withFileTypes: true }) } catch {}
+  try {
+    entries = await fs.promises.readdir(dir, { withFileTypes: true })
+  } catch {}
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
-    if (entry.name === target || entry.name.endsWith('-universal')) { stats.kept++; continue }
+    if (entry.name === target || entry.name.endsWith('-universal')) {
+      stats.kept++
+      continue
+    }
     const full = path.join(dir, entry.name)
     stats.bytes += await dirSize(full)
     await fs.promises.rm(full, { recursive: true, force: true })
@@ -85,20 +138,88 @@ async function dirSize(dir) {
   while (stack.length) {
     const d = stack.pop()
     let entries = []
-    try { entries = await fs.promises.readdir(d, { withFileTypes: true }) } catch {}
+    try {
+      entries = await fs.promises.readdir(d, { withFileTypes: true })
+    } catch {}
     for (const e of entries) {
       const full = path.join(d, e.name)
       try {
         if (e.isDirectory()) stack.push(full)
-        else { const s = await fs.promises.stat(full); total += (s.blocks ?? 0) * 512 || s.size }
+        else {
+          const s = await fs.promises.stat(full)
+          total += (s.blocks ?? 0) * 512 || s.size
+        }
       } catch {}
     }
   }
   return total
 }
 
+/**
+ * Сайдкар второго транспорта. В упакованном приложении его ищут в
+ * `process.resourcesPath` — без этой копии iroh в сборке мёртв целиком:
+ * ни соседей по локальной сети, ни второго транспорта.
+ *
+ * Путь можно задать через IROH_BRIDGE_BIN (в CI бинарник кладут отдельно для
+ * каждой платформы). Файла нет — собираем без него, но громко предупреждаем.
+ */
+function irohBridgeResource() {
+  const fromEnv = process.env.IROH_BRIDGE_BIN
+  const binary = isWindows ? 'iroh-bridge.exe' : 'iroh-bridge'
+  const candidate =
+    fromEnv || path.join(__dirname, '../../native/iroh-bridge/target/release', binary)
+
+  if (fs.existsSync(candidate)) return [candidate]
+
+  console.warn(
+    `forge: сайдкар не найден по пути ${candidate} — в сборке не будет ни соседей, ни iroh-транспорта`
+  )
+  return []
+}
+
+/**
+ * Packager копирует apps/desktop как есть и не умеет в hoisting npm workspaces,
+ * поэтому перед сборкой зеркалим корневой node_modules ссылками, а после —
+ * снимаем их. Список пишем на диск: если forge упадёт, следующий запуск
+ * подчистит хвост сам (иначе ссылки копятся сотнями).
+ */
+const SYMLINK_MANIFEST = path.join(__dirname, 'out', '.forge-symlinks.json')
+
+function removeLink(target) {
+  try {
+    if (!fs.lstatSync(target).isSymbolicLink()) return
+  } catch {
+    return
+  }
+  // на Windows симлинк на папку снимается только rmdir, unlink даёт EPERM
+  try {
+    fs.unlinkSync(target)
+  } catch {
+    try {
+      fs.rmdirSync(target)
+    } catch {}
+  }
+}
+
+function cleanupForgeSymlinks() {
+  let manifest = { links: [], dirs: [] }
+  try {
+    manifest = JSON.parse(fs.readFileSync(SYMLINK_MANIFEST, 'utf-8'))
+  } catch {}
+  for (const link of manifest.links ?? []) removeLink(link)
+  for (const dir of manifest.dirs ?? []) {
+    try {
+      fs.rmdirSync(dir)
+    } catch {}
+  }
+  try {
+    fs.rmSync(SYMLINK_MANIFEST, { force: true })
+  } catch {}
+}
+
 let packagerConfig = {
   icon: path.join(__dirname, 'build/icon'),
+  extraResource: irohBridgeResource(),
   protocols: [{ name: appName, schemes: ['ruqa'] }],
   extendInfo: {
     CFBundleDocumentTypes: [
@@ -112,6 +233,14 @@ let packagerConfig = {
   },
   derefSymlinks: true,
   ignore: [
+    // npm заводит симлинк на каждый пакет workspace, включая сам apps/desktop:
+    // node_modules/@ruqa/desktop указывает на корень приложения. Вместе с
+    // derefSymlinks это бесконечная рекурсия при копировании — packager молча
+    // умирает на «Finalizing package», не оставив ни ошибки, ни папки out.
+    // Соседние приложения в десктопной сборке тоже не нужны.
+    /(^|\/)node_modules\/@ruqa\/desktop(\/|$)/,
+    /(^|\/)node_modules\/@ruqa\/mobile(\/|$)/,
+    /(^|\/)node_modules\/@ruqa\/web(\/|$)/,
     /(^|\/)node_modules\/react-native[^/]*(\/|$)/,
     /(^|\/)node_modules\/@react-native(\/|$)/,
     /(^|\/)node_modules\/@expo(\/|$)/,
@@ -141,7 +270,7 @@ let packagerConfig = {
     /^\/tsconfig\.json$/,
     /^\/CHANGELOG\.md$/,
     /^\/README\.md$/,
-    /^\/forge\.config\.cjs$/,
+    /^\/forge\.config\.cjs$/
   ]
 }
 
@@ -190,11 +319,11 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-msix',
-      platforms: isWindows ? ['win32'] : [],
+      platforms: canMakeMsix ? ['win32'] : [],
       config: {
         appManifest: path.join(__dirname, 'out', 'manifest', 'AppxManifest.xml'),
         packageAssets: path.join(__dirname, 'build', 'msix-assets'),
-        windowsKitVersion: getWindowsKitVersion(),
+        windowsKitVersion,
         ...(process.env.WINDOWS_CERTIFICATE_FILE
           ? {
               windowsSignOptions: {
@@ -209,23 +338,42 @@ module.exports = {
 
   hooks: {
     prePackage: async () => {
+      cleanupForgeSymlinks()
       const rootNM = path.join(__dirname, '..', '..', 'node_modules')
       const localNM = path.join(__dirname, 'node_modules')
-      const created = []
+      const links = []
+      const dirs = []
+
       for (const entry of fs.readdirSync(rootNM)) {
+        if (entry.startsWith('.') || entry === '@ruqa') continue
         const localPath = path.join(localNM, entry)
-        if (!fs.existsSync(localPath)) {
-          fs.symlinkSync(path.join(rootNM, entry), localPath)
-          created.push(localPath)
-        }
+        if (fs.existsSync(localPath)) continue
+        fs.symlinkSync(path.join(rootNM, entry), localPath, 'junction')
+        links.push(localPath)
       }
-      global.__forgeSymlinks = created
+
+      // @ruqa нельзя линковать целиком: npm держит там и сам apps/desktop,
+      // и ссылка node_modules/@ruqa/desktop замыкает обход на корень приложения.
+      // Кладём только те пакеты, что нужны десктопу в рантайме.
+      const scopeDir = path.join(localNM, '@ruqa')
+      if (!fs.existsSync(scopeDir)) {
+        fs.mkdirSync(scopeDir, { recursive: true })
+        dirs.push(scopeDir)
+      }
+      for (const name of ['components', 'core', 'domain', 'drive', 'locales']) {
+        const source = path.join(rootNM, '@ruqa', name)
+        const localPath = path.join(scopeDir, name)
+        if (!fs.existsSync(source) || fs.existsSync(localPath)) continue
+        fs.symlinkSync(source, localPath, 'junction')
+        links.push(localPath)
+      }
+
+      fs.mkdirSync(path.dirname(SYMLINK_MANIFEST), { recursive: true })
+      fs.writeFileSync(SYMLINK_MANIFEST, JSON.stringify({ links, dirs }))
     },
     postPackage: async (_config, { platform, arch, outputPaths }) => {
-      for (const p of global.__forgeSymlinks ?? []) {
-        try { fs.unlinkSync(p) } catch {}
-      }
-      await Promise.all(outputPaths.map(p => prunePrebuilds(p, platform, arch)))
+      cleanupForgeSymlinks()
+      await Promise.all(outputPaths.map((p) => prunePrebuilds(p, platform, arch)))
     },
     preMake: async () => {
       fs.rmSync(path.join(__dirname, 'out', 'make'), { recursive: true, force: true })
@@ -234,7 +382,9 @@ module.exports = {
       const outManifest = path.join(__dirname, 'out', 'manifest', 'AppxManifest.xml')
       const baseVersion = String(pkg.version).split('-')[0]
       if (!/^\d+\.\d+\.\d+$/.test(baseVersion)) {
-        throw new Error(`Invalid pkg.version "${pkg.version}" — MSIX needs MAJOR.MINOR.PATCH (with optional -tag)`)
+        throw new Error(
+          `Invalid pkg.version "${pkg.version}" — MSIX needs MAJOR.MINOR.PATCH (with optional -tag)`
+        )
       }
       const msixVersion = `${baseVersion}.0`
       const xml = fs.readFileSync(sourceManifest, 'utf-8')

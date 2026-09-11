@@ -29,6 +29,8 @@
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\" \"packages/**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\" \"*.md\" \"docs/**/*.md\"",
     "check:tokens": "bash scripts/check-tokens.sh",
     "knip": "knip",
+    "lan:smoke": "node scripts/lan-smoke.mjs",
+    "lan:smoke:offline": "node scripts/lan-smoke.mjs --offline",
     "version:bump": "node scripts/bump-version.js",
     "prepare": "husky"
   },
@@ -54,6 +56,9 @@
     "typescript-eslint": "^8.59.2"
   },
   "version": "2.0.0",
+  "engines": {
+    "node": "20.x || 22.x"
+  },
   "dependencies": {
     "expo": "~56.0.18",
     "react": "19.2.3",
