@@ -122,12 +122,24 @@ def draw_lockup(height, ink, accent):
     буквы на экране. Поэтому рисуем с запасом и обрезаем по альфе.
     """
     work = height * SS
-    font_path = os.path.join(ROOT, "assets", "fonts", "NotoSans-JP-Bold.ttf")
+    # Outfit Bold, обрезанный до букв слова: полный Noto Sans JP весил 5,7 МБ
+    # ради четырёх латинских знаков. Лицензия рядом — OFL-Outfit.txt.
+    font_path = os.path.join(ROOT, "assets", "fonts", "Outfit-Wordmark.ttf")
     font = ImageFont.truetype(font_path, int(work * 0.72))
 
     tmp = Image.new("RGBA", (work * 10, work * 3), (0, 0, 0, 0))
     d = ImageDraw.Draw(tmp)
-    tb = d.textbbox((0, 0), "Ruqa", font=font)
+
+    # «R» заглавная, но посаженная на высоту строчных: её верх совпадает с
+    # верхом «u», а низ уходит под базовую линию примерно на ту же глубину,
+    # на какую свисает хвост «q» — буквы отражают друг друга.
+    box_low = d.textbbox((0, 0), "uqa", font=font)
+    box_cap = d.textbbox((0, 0), "R", font=font)
+    drop = box_low[1] - box_cap[1]
+    # Advance «R» с учётом кернинга пары «Ru»: длина пары минус длина «u».
+    r_advance = font.getlength("Ru") - font.getlength("u")
+    top = min(box_low[1], box_cap[1] + drop)
+    bottom = max(box_low[3], box_cap[3] + drop)
 
     mark_px = int(work * 1.1)
     mark = draw_mark(mark_px, MARK_WIDE, ink, accent, fill=0.98)
@@ -135,7 +147,10 @@ def draw_lockup(height, ink, accent):
 
     x, y = work, int(work * 1.5)
     tmp.alpha_composite(mark, (x, y - mark_px // 2))
-    d.text((x + mark_px + gap - tb[0], y - (tb[1] + tb[3]) // 2), "Ruqa", font=font, fill=ink)
+    text_x = x + mark_px + gap - box_cap[0]
+    text_y = y - (top + bottom) // 2
+    d.text((text_x, text_y + drop), "R", font=font, fill=accent)
+    d.text((text_x + r_advance, text_y), "uqa", font=font, fill=ink)
 
     bbox = tmp.getbbox()
     margin = int(work * 0.05)

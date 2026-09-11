@@ -7,29 +7,30 @@
 
   <name>Ruqa</name>
 
-  <summary>Peer-to-peer file transfer</summary>
+  <summary>Offline-first file transfer</summary>
 
   <developer id="io.github.ivinci369">
-    <name>Denis Lupookov</name>
+    <name>Ruqa</name>
   </developer>
 
   <launchable type="desktop-id">
     com.ruqa.Ruqa.desktop
   </launchable>
 
-  <url type="homepage">https://ruqa.app/</url>
-  <url type="bugtracker">https://github.com/iVINCi369/altersend/issues</url>
-  <url type="vcs-browser">https://github.com/iVINCi369/altersend</url>
-  <url type="contribute">https://github.com/iVINCi369/altersend/blob/main/CONTRIBUTING.md</url>
+  <url type="homepage">https://github.com/iVINCi369/ruqa</url>
+  <url type="bugtracker">https://github.com/iVINCi369/ruqa/issues</url>
+  <url type="vcs-browser">https://github.com/iVINCi369/ruqa</url>
+  <url type="contribute">https://github.com/iVINCi369/ruqa/blob/main/CONTRIBUTING.md</url>
 
   <description>
     <p>
-      Ruqa is a free, open-source app for sending files directly between your devices — no cloud, no uploads, no size limits. Files transfer peer-to-peer and are end-to-end encrypted; nothing is ever stored on a server.
+      Ruqa is a free, open-source app for sending files straight between devices. Two phones in the same room find each other over the local network and transfer without a router, without mobile data and without any server in between. When the devices are apart, the transfer goes peer-to-peer over the internet — end-to-end encrypted, with no size limit and no upload step.
     </p>
     <p>
-      Why use cloud storage when you can send files directly — instantly, privately, with no upload costs and no limits?
+      Why use cloud storage — or wait for signal at all — when the file can go straight to the recipient?
     </p>
     <ul>
+      <li>Works with no internet — two devices on the same Wi-Fi transfer directly</li>
       <li>No accounts — no signup, no login, no email address required</li>
       <li>No servers — files transfer directly device-to-device</li>
       <li>End-to-end encrypted — only your devices can read your files</li>
@@ -37,16 +38,7 @@
     </ul>
   </description>
 
-  <screenshots>
-    <screenshot type="default">
-      <image>https://raw.githubusercontent.com/iVINCi369/altersend/main/assets/desktop-example.png</image>
-      <caption>Ruqa desktop interface</caption>
-    </screenshot>
-    <screenshot>
-      <image>https://raw.githubusercontent.com/iVINCi369/altersend/main/assets/mobile-example.png</image>
-      <caption>Ruqa mobile interface</caption>
-    </screenshot>
-  </screenshots>
+  <!-- Screenshots return once the interface rework lands. -->
 
   <releases>
     <release version="1.8.0" date="2026-07-31"/>

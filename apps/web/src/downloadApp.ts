@@ -1,12 +1,5 @@
-import { appStoreUrl, downloadUrl, playStoreUrl } from '@ruqa/domain'
-import { platform, type OS } from './platform'
-
-const STORE_URL: Partial<Record<OS, string>> = {
-  ios: appStoreUrl,
-  android: playStoreUrl
-}
+import { downloadUrl } from '@ruqa/domain'
 
 export function openDownload(): void {
-  const url = STORE_URL[platform.os] ?? downloadUrl
-  window.open(url, '_blank', 'noopener,noreferrer')
+  window.open(downloadUrl, '_blank', 'noopener,noreferrer')
 }

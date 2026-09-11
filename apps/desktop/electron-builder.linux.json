@@ -36,6 +36,10 @@
       "from": "build/tray",
       "to": "tray",
       "filter": ["**/*"]
+    },
+    {
+      "from": "../../native/iroh-bridge/target/release/iroh-bridge",
+      "to": "iroh-bridge"
     }
   ]
 }

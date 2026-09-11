@@ -4,18 +4,16 @@
   <br />
   <br />
 
-### File transfer without the cloud storage.
+### File transfer that does not need the internet.
 
-Files go directly between your devices — end-to-end encrypted, no accounts, nothing stored, no limits.
+Phone to phone over Wi-Fi with no router, no signal and no cloud — and peer-to-peer across continents when your devices are apart. End-to-end encrypted, no accounts, nothing stored, no limits.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20iOS%20%7C%20Android-lightgrey)](#download)
 
-[Website](https://ruqa.app) · [Download](https://ruqa.app/download) · [Discord](https://discord.gg/R6tmrk85Vx) · [X](https://x.com/ruqa_app)
+[Download](https://github.com/iVINCi369/ruqa/releases/latest) · [Architecture](docs/architecture.md)
 
   <br/>
-
-  <img src="assets/ruqa_demo.gif" alt="Sending a file from desktop to mobile with Ruqa" width="820" />
 
 </div>
 
@@ -46,15 +44,16 @@ Files go directly between your devices — end-to-end encrypted, no accounts, no
 
 ## About
 
-Ruqa is a free, open-source app for sending files directly between your devices, with no cloud storage and no uploads. Files transfer P2P with no size limit and are end-to-end encrypted.
+Ruqa is a free, open-source app for sending files straight between devices. Two phones in the same room find each other over the local network and transfer without a router, without mobile data and without any server in between — the same thing AirDrop does, except between any two platforms. When the devices are apart, the transfer goes peer-to-peer over the internet, end-to-end encrypted, with no size limit and no upload step.
 
-Why use WeTransfer, Dropbox, or Google Drive when you can send files straight to the recipient, instantly and privately, with no upload step?
+Why use WeTransfer, Dropbox, or Google Drive — or wait for signal at all — when the file can go straight to the recipient?
 
 ## Features
 
 - **No accounts** — no signup, no login, no email address required
+- **Works with no internet** — two devices on the same Wi-Fi transfer directly, even with the router offline and mobile data off
 - **No cloud storage** — files go directly between devices; nothing is ever uploaded or stored on a server
-- **Receive in a browser** — recipients open a share link at [app.ruqa.app](https://app.ruqa.app) and download straight from the sender, no install
+- **Receive in a browser** — recipients open a share link and download straight from the sender, no install
 - **End-to-end encrypted** — only your devices can read your files, always
 - **No size limit P2P** — send a 100 MB photo or a 500 GB video archive, same experience
 - **Pair your devices** — pair a device once, then send to it without scanning or typing a code each time
@@ -67,13 +66,13 @@ Why use WeTransfer, Dropbox, or Google Drive when you can send files straight to
 
 Get the latest release from [ruqa.app/download](https://ruqa.app/download) or directly from the table below.
 
-| Platform    | Download                                                                                                                                                                                    |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Windows** | [Microsoft Store](https://apps.microsoft.com/detail/9NHLK9GLVDLW) (signed) · [EXE installer](https://github.com/iVINCi369/altersend/releases/latest)                                    |
-| **macOS**   | [DMG — Apple Silicon](https://github.com/iVINCi369/altersend/releases/latest) · [DMG — Intel](https://github.com/iVINCi369/altersend/releases/latest) · [Homebrew](#macos-homebrew) |
-| **Linux**   | [AppImage](https://github.com/iVINCi369/altersend/releases/latest) · [Flatpak](#linux-flatpak)                                                                                          |
-| **Android** | [Google Play](https://play.google.com/store/apps/details?id=com.ruqa.mobile) · [APK](https://github.com/iVINCi369/altersend/releases/latest)                                       |
-| **iOS**     | [App Store](https://apps.apple.com/us/app/ruqa-file-transfer/id6772496271)                                                                                                             |
+| Platform    | Download                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Windows** | [EXE installer](https://github.com/iVINCi369/ruqa/releases/latest) (unsigned for now)                                                                                     |
+| **macOS**   | [DMG — Apple Silicon](https://github.com/iVINCi369/ruqa/releases/latest) · [DMG — Intel](https://github.com/iVINCi369/ruqa/releases/latest) · [Homebrew](#macos-homebrew) |
+| **Linux**   | [AppImage](https://github.com/iVINCi369/ruqa/releases/latest) · [Flatpak](#linux-flatpak)                                                                                 |
+| **Android** | [APK](https://github.com/iVINCi369/ruqa/releases/latest)                                                                                                                  |
+| **iOS**     | not published yet                                                                                                                                                         |
 
 ### macOS Homebrew
 
@@ -88,7 +87,7 @@ brew install --cask ruqa
 You can build and install the included Flatpak manifest yourself (needs `flatpak-builder`):
 
 ```sh
-git clone https://github.com/iVINCi369/altersend.git && cd ruqa
+git clone https://github.com/iVINCi369/ruqa.git && cd ruqa
 flatpak-builder --user --install --install-deps-from=flathub --force-clean build-dir flatpak/com.ruqa.Ruqa.yaml
 ```
 
@@ -147,7 +146,7 @@ Ruqa is built on [Hyperswarm](https://github.com/holepunchto/hyperswarm), a Kade
 ### Setup
 
 ```sh
-git clone https://github.com/iVINCi369/altersend.git
+git clone https://github.com/iVINCi369/ruqa.git
 cd ruqa
 npm install
 
@@ -206,7 +205,7 @@ Crash reporting via [Sentry](https://sentry.io) is opt-in and off by default.
 
 ## Contributors
 
-[![Contributors](https://contrib.rocks/image?repo=iVINCi369/altersend)](https://github.com/iVINCi369/altersend/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=iVINCi369/ruqa)](https://github.com/iVINCi369/ruqa/graphs/contributors)
 
 ## Contributing
 

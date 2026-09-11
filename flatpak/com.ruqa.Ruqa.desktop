@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Ruqa
-Comment=Peer-to-peer file transfer
+Comment=Offline-first file transfer
 Exec=ruqa %U
 Icon=com.ruqa.Ruqa
 Categories=Network;

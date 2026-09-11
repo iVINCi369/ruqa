@@ -12,7 +12,7 @@ Thanks for your interest in contributing! This guide covers everything from firs
 ## Setup
 
 ```sh
-git clone https://github.com/iVINCi369/altersend.git
+git clone https://github.com/iVINCi369/ruqa.git
 cd ruqa
 npm install
 

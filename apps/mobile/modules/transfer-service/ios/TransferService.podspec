@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
     :ios => '15.1'
   }
   s.swift_version  = '5.9'
-  s.source         = { git: 'https://github.com/iVINCi369/altersend.git' }
+  s.source         = { git: 'https://github.com/iVINCi369/ruqa.git' }
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'

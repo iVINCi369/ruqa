@@ -5,12 +5,16 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   IgnorableNamespaces="rescap"
 >
+  <!-- Publisher обязан посимвольно совпадать с subject сертификата, которым
+       подписан пакет. CN=Ruqa годится только для self-signed сборок: для
+       Store значение берётся в Partner Center, для SignPath — из их
+       сертификата. -->
   <!-- Version is rewritten at build time from package.json by the preMake hook in forge.config.cjs; this placeholder is ignored. -->
-  <Identity Name="iVINCi369.Ruqa" Version="0.0.0.0" Publisher="CN=FC1060C4-5ABD-47BF-A2C3-DBA96C1D853C" ProcessorArchitecture="x64" />
+  <Identity Name="iVINCi369.Ruqa" Version="0.0.0.0" Publisher="CN=Ruqa" ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>Ruqa</DisplayName>
-    <PublisherDisplayName>Devaprime</PublisherDisplayName>
-    <Description>Peer-to-peer file transfer. No servers, no accounts.</Description>
+    <PublisherDisplayName>Ruqa</PublisherDisplayName>
+    <Description>Offline-first file transfer. No internet needed, no servers, no accounts.</Description>
     <Logo>assets\StoreLogo.png</Logo>
   </Properties>
   <Resources>
@@ -24,7 +28,7 @@
   </Capabilities>
   <Applications>
     <Application Id="App" Executable="app\Ruqa.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements DisplayName="Ruqa" Description="Peer-to-peer file transfer. No servers, no accounts." Square150x150Logo="assets\Square150x150Logo.png" Square44x44Logo="assets\Square44x44Logo.png" BackgroundColor="transparent">
+      <uap:VisualElements DisplayName="Ruqa" Description="Offline-first file transfer. No internet needed, no servers, no accounts." Square150x150Logo="assets\Square150x150Logo.png" Square44x44Logo="assets\Square44x44Logo.png" BackgroundColor="transparent">
         <uap:DefaultTile Square71x71Logo="assets\Square71x71Logo.png" />
       </uap:VisualElements>
       <Extensions>

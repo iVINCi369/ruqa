@@ -1,14 +1,21 @@
-export const websiteUrl = 'https://ruqa.app'
+// Своего домена у Ruqa пока нет: ruqa.app не зарегистрирован. Всё, что реально
+// существует, — репозиторий, его релизы и веб-клиент на Cloudflare Pages
+// (проект ruqa-web из deploy-web.yml; адрес появится после первого деплоя).
+// Когда домен появится, правится только этот файл.
+export const githubUrl = 'https://github.com/iVINCi369/ruqa'
+export const releasesUrl = 'https://github.com/iVINCi369/ruqa/releases/latest'
+export const releasesApiUrl = 'https://api.github.com/repos/iVINCi369/ruqa/releases/latest'
+
+export const websiteUrl = githubUrl
+export const downloadUrl = releasesUrl
+export const webAppUrl = 'https://ruqa-web.pages.dev'
+export const sponsorUrl = 'https://github.com/sponsors/iVINCi369'
+export const selfHostSetupUrl = 'https://github.com/iVINCi369/ruqa/blob/main/docs/architecture.md'
+
+// TODO: адреса без хозяина. Бэкенда аккаунтов не существует — платный раздел
+// не работает; документов и почты поддержки тоже нет. Не выкидываем только
+// потому, что на них завязаны экран онбординга и платный экран.
 export const accountApiUrl = 'https://api.ruqa.app'
-export const webAppUrl = 'https://app.ruqa.app'
-export const downloadUrl = 'https://ruqa.app/download'
-export const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.ruqa.mobile'
-export const appStoreUrl = 'https://apps.apple.com/app/id6772496271'
-export const sponsorUrl = 'https://ruqa.app/sponsor'
-export const selfHostSetupUrl = 'https://ruqa.app/self-host/setup'
 export const privacyPolicyUrl = 'https://ruqa.app/privacy'
 export const termsOfServiceUrl = 'https://ruqa.app/terms'
-export const githubUrl = 'https://github.com/iVINCi369/altersend'
-export const discordUrl = 'https://discord.gg/R6tmrk85Vx'
-export const xUrl = 'https://x.com/ruqa_app'
 export const supportEmail = 'hello@ruqa.app'

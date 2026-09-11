@@ -1,21 +1,13 @@
 import { ExternalLink } from '@ruqa/components'
 import {
-  discordUrl,
   downloadUrl,
   githubUrl,
   privacyPolicyUrl,
   supportEmail,
-  termsOfServiceUrl,
-  xUrl
+  termsOfServiceUrl
 } from '@ruqa/domain'
 import { useTranslation } from '@ruqa/locales'
 import { BLOCK_WIDTH } from '../Card'
-
-const XGlyph = () => (
-  <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' aria-hidden>
-    <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
-  </svg>
-)
 
 const GithubGlyph = () => (
   <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' aria-hidden>
@@ -23,17 +15,7 @@ const GithubGlyph = () => (
   </svg>
 )
 
-const DiscordGlyph = () => (
-  <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' aria-hidden>
-    <path d='M20.317 4.369a19.8 19.8 0 0 0-4.885-1.515.07.07 0 0 0-.079.036c-.21.375-.444.865-.608 1.25a18.3 18.3 0 0 0-5.487 0 12.6 12.6 0 0 0-.617-1.25.07.07 0 0 0-.079-.036A19.7 19.7 0 0 0 3.677 4.37a.06.06 0 0 0-.03.025C.533 9.046-.32 13.58.099 18.058a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.08.08 0 0 0 .084-.028 14 14 0 0 0 1.226-1.994.076.076 0 0 0-.042-.106 13 13 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.07.07 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.07.07 0 0 1 .079.009c.12.099.245.198.372.292a.077.077 0 0 1-.006.127c-.598.35-1.22.645-1.873.891a.077.077 0 0 0-.041.107c.36.698.772 1.363 1.225 1.993a.076.076 0 0 0 .084.028 19.8 19.8 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.665a.06.06 0 0 0-.031-.026M8.02 15.331c-1.182 0-2.157-1.085-2.157-2.419s.956-2.419 2.157-2.419c1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418m7.975 0c-1.183 0-2.157-1.085-2.157-2.419s.955-2.419 2.157-2.419c1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418' />
-  </svg>
-)
-
-const SOCIALS = [
-  { href: xUrl, label: 'X', glyph: <XGlyph /> },
-  { href: githubUrl, label: 'GitHub', glyph: <GithubGlyph /> },
-  { href: discordUrl, label: 'Discord', glyph: <DiscordGlyph /> }
-]
+const SOCIALS = [{ href: githubUrl, label: 'GitHub', glyph: <GithubGlyph /> }]
 
 export function Footer() {
   const { t } = useTranslation(['web'])

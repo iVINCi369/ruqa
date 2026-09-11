@@ -10,7 +10,7 @@
 2. Fill in the form — only the maintainers will see it
 3. We'll work with you privately and credit you in the fix
 
-Direct link: [Report a vulnerability](https://github.com/iVINCi369/altersend/security/advisories/new)
+Direct link: [Report a vulnerability](https://github.com/iVINCi369/ruqa/security/advisories/new)
 
 ### Alternative: email
 
