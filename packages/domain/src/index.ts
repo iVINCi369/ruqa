@@ -1,6 +1,7 @@
 export * from './format'
 export * from './paths'
 export * from './version'
+export * from './update/latestRelease'
 export * from './whatsNew/releaseNotes'
 export * from './whatsNew/useWhatsNew'
 export * from './whatsNew/whatsNewModel'
@@ -11,6 +12,8 @@ export * from './send/shareModel'
 export * from './send/peerListUi'
 export { usePeerEventLog } from './send/usePeerEventLog'
 export { useShareViewModel } from './send/useShareViewModel'
+export { useNearbyDevices } from './send/useNearbyDevices'
+export type { NearbyDeviceRow, NearbyDevices, NearbyInviteStatus } from './send/useNearbyDevices'
 export type {
   ShareViewModel,
   DeviceRow,

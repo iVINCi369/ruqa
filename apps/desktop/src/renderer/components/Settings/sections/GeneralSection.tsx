@@ -9,7 +9,7 @@ import {
   ToggleSwitch,
   useTheme
 } from '@ruqa/components'
-import { FolderIcon } from '@ruqa/components/icons'
+import { FolderIcon, MinusIcon, PlusIcon } from '@ruqa/components/icons'
 import { useAutoAcceptSetting } from '@ruqa/domain'
 import { useTranslation } from '@ruqa/locales'
 import { bridgeApi } from '../../../api/bridgeApi'
@@ -24,6 +24,13 @@ import { isAskEveryTime, setAskEveryTime } from '../../../lifecycle/downloadLoca
 import { SectionShell } from './SectionShell'
 
 const MAX_PATH_CHARS = 52
+
+/** Соседний разрешённый шаг масштаба; список шагов приходит из основного процесса. */
+function stepFrom({ factor, steps }: { factor: number; steps: number[] }, delta: number): number {
+  const index = steps.indexOf(factor)
+  const from = index === -1 ? steps.indexOf(1) : index
+  return steps[Math.min(steps.length - 1, Math.max(0, from + delta))] ?? factor
+}
 
 function truncatePath(folder: string): string {
   if (folder.length <= MAX_PATH_CHARS) return folder
@@ -44,12 +51,27 @@ export function GeneralSection() {
     [SYSTEM_THEME_PREFERENCE]: t('settings:appearance.system')
   }
 
+  const [zoom, setZoom] = useState<{ factor: number; steps: number[] } | null>(null)
   const [folder, setFolder] = useState<string | null>(null)
   const [askEveryTime, setAsk] = useState(isAskEveryTime)
   const [crashReporting, setCrashReporting] = useState(isCrashReportingEnabled)
   const autoAccept = useAutoAcceptSetting(autoAcceptStoragePort)
   const [shareExtension, setShareExtension] = useState<ShareExtensionState>('unknown')
   const awaitingSettingsVisit = useRef(false)
+
+  useEffect(() => {
+    bridgeApi
+      .getZoom()
+      .then(setZoom)
+      .catch((error) => console.error('GeneralSection: could not load zoom factor', error))
+  }, [])
+
+  const changeZoom = (factor: number) => {
+    setZoom((prev) => (prev ? { ...prev, factor } : prev))
+    bridgeApi
+      .setZoom(factor)
+      .catch((error) => console.error('GeneralSection: could not set zoom factor', error))
+  }
 
   useEffect(() => {
     bridgeApi
@@ -203,6 +225,42 @@ export function GeneralSection() {
             labels={appearanceLabels}
             onChange={setThemePreference}
           />
+
+          {zoom ? (
+            <LinkCard>
+              <LinkRow
+                compact
+                isLast
+                label={t('settings:zoom.label')}
+                subtitle={t('settings:zoom.description')}
+                trailing={
+                  <div className='flex items-center gap-1.5'>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      iconOnly
+                      aria-label={t('settings:zoom.decrease')}
+                      disabled={zoom.factor <= zoom.steps[0]}
+                      onClick={() => changeZoom(stepFrom(zoom, -1))}
+                      icon={<MinusIcon size={16} />}
+                    />
+                    <span className='min-w-[52px] text-center text-[13px] tabular-nums text-text-secondary'>
+                      {Math.round(zoom.factor * 100)}%
+                    </span>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      iconOnly
+                      aria-label={t('settings:zoom.increase')}
+                      disabled={zoom.factor >= zoom.steps[zoom.steps.length - 1]}
+                      onClick={() => changeZoom(stepFrom(zoom, 1))}
+                      icon={<PlusIcon size={16} />}
+                    />
+                  </div>
+                }
+              />
+            </LinkCard>
+          ) : null}
         </div>
       </div>
     </SectionShell>

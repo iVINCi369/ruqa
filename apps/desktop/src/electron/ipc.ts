@@ -25,6 +25,7 @@ import {
   writeFileViaTemp
 } from './store/index.js'
 import { setThemeSource, type ThemeSource } from './theme.js'
+import { currentZoomFactor, setZoomFactor, ZOOM_STEPS } from './zoom.js'
 import type { DesktopRuntime } from './runtime.js'
 import { setReportingEnabled } from './sentry.js'
 
@@ -207,6 +208,9 @@ export function registerIpcHandlers(runtime: DesktopRuntime) {
   ipcMain.handle('theme:setPreference', (_evt, preference: ThemeSource) =>
     setThemeSource(preference)
   )
+
+  ipcMain.handle('zoom:get', () => ({ factor: currentZoomFactor(), steps: [...ZOOM_STEPS] }))
+  ipcMain.handle('zoom:set', (_evt, factor: number) => setZoomFactor(factor))
 
   ipcMain.handle('app:requestCameraAccess', async () => {
     if (!isMac) return true

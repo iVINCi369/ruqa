@@ -1,4 +1,5 @@
 import type { RememberedPeer } from '../peers/remembered-peer'
+import type { LanPeer } from '../peers/lan-peer'
 import type { DeviceType } from '../identity/device-type'
 
 export type TransferStatus =
@@ -114,6 +115,31 @@ export interface InviteResponseReceivedEvent {
   response: 'declined'
 }
 
+export interface LanPeersEvent {
+  type: 'lan-peers'
+  peers: LanPeer[]
+}
+
+export interface LanInviteReceivedEvent {
+  type: 'lan-invite-received'
+  requestId: number
+  endpointId: string
+  /** Пусто, если сосед не представился: подпись рисует интерфейс. */
+  displayName: string
+  deviceType: DeviceType
+  /** Не null у своих — можно показать имя из списка запомненных. */
+  devicePubkey: string | null
+  topic: string
+  fileCount?: number
+  textCount?: number
+  totalSize?: number
+}
+
+export interface LanInviteExpiredEvent {
+  type: 'lan-invite-expired'
+  requestId: number
+}
+
 export interface PairingPeerConnectedEvent {
   type: 'pairing-peer-connected'
   peerKey: string
@@ -130,6 +156,9 @@ export type TransferIPCMessage =
   | RememberRequestedEvent
   | InviteReceivedEvent
   | InviteResponseReceivedEvent
+  | LanPeersEvent
+  | LanInviteReceivedEvent
+  | LanInviteExpiredEvent
   | PairingPeerConnectedEvent
 
 export function createReadyEvent(): ReadyEvent {
@@ -181,6 +210,20 @@ export function createInviteResponseReceivedEvent(
   response: Omit<InviteResponseReceivedEvent, 'type'>
 ): InviteResponseReceivedEvent {
   return { type: 'invite-response-received', ...response }
+}
+
+export function createLanPeersEvent(peers: LanPeer[]): LanPeersEvent {
+  return { type: 'lan-peers', peers }
+}
+
+export function createLanInviteReceivedEvent(
+  invite: Omit<LanInviteReceivedEvent, 'type'>
+): LanInviteReceivedEvent {
+  return { type: 'lan-invite-received', ...invite }
+}
+
+export function createLanInviteExpiredEvent(requestId: number): LanInviteExpiredEvent {
+  return { type: 'lan-invite-expired', requestId }
 }
 
 export function createPairingPeerConnectedEvent(peerKey: string): PairingPeerConnectedEvent {

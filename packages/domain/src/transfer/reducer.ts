@@ -55,7 +55,10 @@ export const initialTransferSessionState: TransferSessionState = {
     incomingInvite: null,
     inviteResponses: {}
   },
-  peers: []
+  peers: [],
+  lanPeers: [],
+  lanVisibility: 'paired',
+  lanInvite: null
 }
 
 function deriveConnectionType(
@@ -535,6 +538,20 @@ export function transferSessionReducer(
         remember: { ...state.remember, peerDisplayNames, incomingInvite }
       }
     }
+    case 'set_lan_peers':
+      return { ...state, lanPeers: action.peers }
+    case 'set_lan_visibility':
+      // Выключили локальную сеть — список соседей перестаёт быть правдой.
+      return {
+        ...state,
+        lanVisibility: action.visibility,
+        lanPeers: action.visibility === 'off' ? [] : state.lanPeers,
+        lanInvite: action.visibility === 'off' ? null : state.lanInvite
+      }
+    case 'lan_invite_received':
+      return { ...state, lanInvite: action.invite }
+    case 'lan_invite_closed':
+      return state.lanInvite?.requestId === action.requestId ? { ...state, lanInvite: null } : state
     case 'invite_received':
       return { ...state, remember: { ...state.remember, incomingInvite: action.invite } }
     case 'invite_response_received':

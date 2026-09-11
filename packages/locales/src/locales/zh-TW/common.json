@@ -30,7 +30,9 @@
     "add": "新增",
     "showMore": "顯示更多",
     "showLess": "收起",
-    "learnMore": "瞭解更多"
+    "learnMore": "瞭解更多",
+    "decline": "拒絕",
+    "accept": "接受"
   },
   "labels": {
     "settings": "設定",
@@ -47,7 +49,11 @@
     "mobile": "行動裝置",
     "send": "傳送",
     "receive": "接收",
-    "connectionCode": "連線代碼"
+    "connectionCode": "連線代碼",
+    "nearbyDevice": "附近的裝置",
+    "onThisNetwork": "在此網路中",
+    "directLink": "直連",
+    "viaRelay": "經由中繼"
   },
   "files": {
     "folder": "資料夾",

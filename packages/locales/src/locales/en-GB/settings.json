@@ -12,6 +12,21 @@
     "dark": "Dark",
     "system": "System"
   },
+  "zoom": {
+    "label": "Interface scale",
+    "description": "Make everything larger or smaller",
+    "decrease": "Smaller",
+    "increase": "Larger"
+  },
+  "lan": {
+    "title": "Nearby devices",
+    "off": "Off",
+    "offHint": "Ruqa neither looks for devices nor answers requests",
+    "paired": "Paired only",
+    "pairedHint": "Only devices from your list can open a dialogue",
+    "all": "Everyone on this network",
+    "allHint": "Anyone nearby can offer a transfer"
+  },
   "crashReports": {
     "label": "Crash reports",
     "description": "Share anonymous crash data to help improve Ruqa"
@@ -58,9 +73,6 @@
   "rows": {
     "feedback": "Feedback",
     "feedbackHint": "Report a problem or suggest a feature",
-    "discord": "Discord",
-    "x": "X",
-    "discordHint": "Join the community",
     "github": "GitHub",
     "sponsor": "Support Ruqa",
     "privacyPolicy": "Privacy policy",

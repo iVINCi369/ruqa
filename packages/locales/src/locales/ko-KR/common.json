@@ -30,7 +30,9 @@
     "add": "추가",
     "showMore": "더 보기",
     "showLess": "접기",
-    "learnMore": "자세히 보기"
+    "learnMore": "자세히 보기",
+    "decline": "거절",
+    "accept": "수락"
   },
   "labels": {
     "settings": "설정",
@@ -47,7 +49,11 @@
     "mobile": "모바일",
     "send": "보내기",
     "receive": "받기",
-    "connectionCode": "연결 코드"
+    "connectionCode": "연결 코드",
+    "nearbyDevice": "근처의 기기",
+    "onThisNetwork": "이 네트워크",
+    "directLink": "직접",
+    "viaRelay": "릴레이 경유"
   },
   "files": {
     "folder": "폴더",

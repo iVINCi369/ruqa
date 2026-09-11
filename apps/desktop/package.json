@@ -3,7 +3,7 @@
   "productName": "Ruqa",
   "version": "2.0.0",
   "upgrade": "pear://9acz18yee74nradkyypgppxd6foq6sqt7oyxc9cpc5p8p85u8emy",
-  "description": "Peer-to-peer file transfer. No servers, no accounts.",
+  "description": "Offline-first file transfer. No internet needed, no servers, no accounts.",
   "license": "Apache-2.0",
   "author": "Ruqa",
   "type": "module",

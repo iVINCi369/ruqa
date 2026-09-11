@@ -1,6 +1,9 @@
 import {
   TRANSFER_ERROR_CODES,
+  type DeviceType,
   type IncomingFileOffer,
+  type LanPeer,
+  type LanVisibility,
   type RememberedPeer,
   type RendererTransferEvent,
   type TransferErrorCode,
@@ -83,6 +86,24 @@ export interface TransferSessionState {
   transferId: string | null
   remember: RememberState
   peers: RememberedPeer[]
+  /** Соседи, найденные в локальной сети без кода и без сопряжения. */
+  lanPeers: LanPeer[]
+  lanVisibility: LanVisibility
+  /** Входящее приглашение соседа: ждёт ответа не дольше минуты. */
+  lanInvite: IncomingLanInvite | null
+}
+
+export interface IncomingLanInvite {
+  requestId: number
+  endpointId: string
+  /** Пусто, если сосед не представился: подпись рисует интерфейс. */
+  displayName: string
+  deviceType: DeviceType
+  devicePubkey: string | null
+  topic: string
+  fileCount?: number
+  textCount?: number
+  totalSize?: number
 }
 
 export type TransferAction =
@@ -132,6 +153,10 @@ export type TransferAction =
   | { type: 'forget_peer'; peerKey: string }
   | { type: 'rename_peer'; peerKey: string; displayName: string }
   | { type: 'request_pair_peer'; peerKey: string }
+  | { type: 'set_lan_peers'; peers: LanPeer[] }
+  | { type: 'set_lan_visibility'; visibility: LanVisibility }
+  | { type: 'lan_invite_received'; invite: IncomingLanInvite }
+  | { type: 'lan_invite_closed'; requestId: number }
   | { type: 'invite_received'; invite: IncomingInvite }
   | { type: 'invite_response_received'; response: InviteResponse }
   | { type: 'dismiss_invite' }

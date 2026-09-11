@@ -30,7 +30,9 @@
     "add": "Добавить",
     "showMore": "Показать ещё",
     "showLess": "Свернуть",
-    "learnMore": "Подробнее"
+    "learnMore": "Подробнее",
+    "decline": "Отклонить",
+    "accept": "Принять"
   },
   "labels": {
     "settings": "Настройки",
@@ -47,7 +49,11 @@
     "mobile": "Телефон",
     "send": "Отправить",
     "receive": "Получить",
-    "connectionCode": "Код подключения"
+    "connectionCode": "Код подключения",
+    "nearbyDevice": "Устройство рядом",
+    "onThisNetwork": "В этой сети",
+    "directLink": "Напрямую",
+    "viaRelay": "Через ретранслятор"
   },
   "files": {
     "folder": "Папка",

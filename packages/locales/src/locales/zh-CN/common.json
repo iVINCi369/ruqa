@@ -30,7 +30,9 @@
     "add": "添加",
     "showMore": "显示更多",
     "showLess": "收起",
-    "learnMore": "了解更多"
+    "learnMore": "了解更多",
+    "decline": "拒绝",
+    "accept": "接受"
   },
   "labels": {
     "settings": "设置",
@@ -47,7 +49,11 @@
     "mobile": "移动端",
     "send": "发送",
     "receive": "接收",
-    "connectionCode": "连接代码"
+    "connectionCode": "连接代码",
+    "nearbyDevice": "附近的设备",
+    "onThisNetwork": "在此网络中",
+    "directLink": "直连",
+    "viaRelay": "经由中继"
   },
   "files": {
     "folder": "文件夹",

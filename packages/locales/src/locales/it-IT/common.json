@@ -30,7 +30,9 @@
     "add": "Aggiungi",
     "showMore": "Mostra altro",
     "showLess": "Mostra meno",
-    "learnMore": "Scopri di più"
+    "learnMore": "Scopri di più",
+    "decline": "Rifiuta",
+    "accept": "Accetta"
   },
   "labels": {
     "settings": "Impostazioni",
@@ -47,7 +49,11 @@
     "mobile": "Dispositivo mobile",
     "send": "Invia",
     "receive": "Ricevi",
-    "connectionCode": "Codice di connessione"
+    "connectionCode": "Codice di connessione",
+    "nearbyDevice": "Un dispositivo vicino",
+    "onThisNetwork": "In questa rete",
+    "directLink": "Diretto",
+    "viaRelay": "Tramite relay"
   },
   "files": {
     "folder": "Cartella",

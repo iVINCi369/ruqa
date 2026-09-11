@@ -13,6 +13,7 @@ import { bridgeApi, hasBridge } from './api/bridgeApi'
 import {
   ConfirmDialog,
   InviteBanner,
+  LanInviteBanner,
   PairRequestBanner,
   ToastProvider,
   UpdateBanner,
@@ -20,6 +21,7 @@ import {
 } from './components'
 import { isOnboardingCompleted, markOnboardingCompleted } from './lifecycle/onboardingStorage'
 import { useExternalFiles } from './lifecycle/useExternalFiles'
+import { useUpdateCheck } from './lifecycle/useUpdateCheck'
 import { useUpdateReady } from './lifecycle/useUpdateReady'
 import { whatsNewStorage } from './lifecycle/whatsNewStorage'
 import { BridgeUnavailablePage, LoadingPage, OnboardingPage, TransferPage } from './pages'
@@ -41,6 +43,7 @@ export default function App() {
   const progress = useSimulatedLoading()
   const role = useTransferStore((s) => s.role)
   const updateReady = useUpdateReady()
+  const updateCheck = useUpdateCheck(version)
   const whatsNew = useWhatsNew({
     version,
     storage: whatsNewStorage,
@@ -92,7 +95,11 @@ export default function App() {
             setShowOnboarding(false)
           }}
         />
-        <UpdateBanner ready={updateReady} />
+        <UpdateBanner
+          ready={updateReady}
+          available={updateCheck.needsUpdate}
+          onDismissAvailable={updateCheck.dismiss}
+        />
       </>
     )
   }
@@ -108,9 +115,14 @@ export default function App() {
           joinInvite(invite)
         }}
       />
-      <UpdateBanner ready={updateReady} />
+      <LanInviteBanner />
+      <UpdateBanner
+        ready={updateReady}
+        available={updateCheck.needsUpdate}
+        onDismissAvailable={updateCheck.dismiss}
+      />
       <WhatsNewModal
-        open={whatsNew.release !== null && !updateReady}
+        open={whatsNew.release !== null && !updateReady && !updateCheck.needsUpdate}
         release={whatsNew.release}
         version={version}
         onClose={whatsNew.dismiss}

@@ -1,5 +1,11 @@
 import { dispatchToTransferStore, transferStore } from './store'
-import { discardPendingProgress, getTransferApi, loadPeers, reportError } from './binding'
+import {
+  discardPendingProgress,
+  getTransferApi,
+  loadPeers,
+  reportError,
+  respondToLanInvite
+} from './binding'
 import { getTransferDebugMessage, getTransferErrorCode } from './errors'
 import { TRANSFER_ERROR_CODES, type TransferErrorCode } from './types'
 import { createInitialUploadItems, getPhaseFromSelection } from '../send/draftModel'
@@ -13,7 +19,7 @@ import type {
   ShareFileRequest,
   ShareFilesReply
 } from '@ruqa/core'
-import type { IncomingInvite } from './types'
+import type { IncomingInvite, IncomingLanInvite } from './types'
 
 const setError = (code: TransferErrorCode, error: unknown): void => {
   dispatchToTransferStore({
@@ -226,6 +232,28 @@ export const inviteDevice = async (
   }
 }
 
+/**
+ * Позвать соседа из локальной сети. Ответ приходит тем же вызовом: сайдкар
+ * держит стрим открытым, пока человек на той стороне не решит (до минуты).
+ */
+export const inviteLanPeer = async (
+  endpointId: string,
+  topic: string,
+  fileInfo?: { fileCount: number; textCount: number; totalSize: number }
+): Promise<'accepted' | 'declined' | 'timeout'> => {
+  try {
+    const { response } = await getTransferApi().worker.lanInvite({
+      endpointId,
+      topic,
+      ...fileInfo
+    })
+    return response
+  } catch (error) {
+    reportError('inviteLanPeer', error)
+    return 'declined'
+  }
+}
+
 export const respondToInvite = async (input: InviteResponseInput): Promise<boolean> => {
   try {
     const { delivered } = await getTransferApi().worker.respondToInvite(input)
@@ -244,6 +272,20 @@ export const acceptInvite = async (invite: IncomingInvite): Promise<JoinReply> =
   dismissInvite()
   if (transferStore.getState().role !== null) await clearSession()
   return joinSession(invite.topic)
+}
+
+/**
+ * Согласие соседу из локальной сети. Сначала отвечаем ему — он ждёт не дольше
+ * минуты, — и только потом заходим в его сессию.
+ */
+export const acceptLanInvite = async (invite: IncomingLanInvite): Promise<JoinReply> => {
+  await respondToLanInvite(invite.requestId, 'accepted')
+  if (transferStore.getState().role !== null) await clearSession()
+  return joinSession(invite.topic)
+}
+
+export const declineLanInvite = (invite: IncomingLanInvite): void => {
+  void respondToLanInvite(invite.requestId, 'declined')
 }
 
 export const declineInvite = (invite: IncomingInvite): void => {

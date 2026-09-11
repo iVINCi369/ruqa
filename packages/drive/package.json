@@ -36,7 +36,7 @@
   "author": "Ruqa",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iVINCi369/altersend.git"
+    "url": "git+https://github.com/iVINCi369/ruqa.git"
   },
   "scripts": {
     "test": "vitest run",

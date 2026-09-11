@@ -32,7 +32,8 @@
     "sendTexts_one": "Send {{count}} text",
     "sendTexts_other": "Send {{count}} texts",
     "sendItems_one": "Send {{count}} item",
-    "sendItems_other": "Send {{count}} items"
+    "sendItems_other": "Send {{count}} items",
+    "showCode": "Show a code"
   },
   "status": {
     "waitingForPeer": "Waiting for peer",
@@ -116,5 +117,14 @@
     "removeLabel": "Remove {{name}}",
     "addedText": "Added text",
     "tooMany": "Too many files to send. Zip them into an archive first."
+  },
+  "nearby": {
+    "title": "Nearby",
+    "searching": "Looking for devices on this network…",
+    "off": "Discovery is off — turn it on in connection settings",
+    "selectFirst": "Choose files first",
+    "accepted": "Accepted",
+    "declined": "Declined",
+    "noAnswer": "No answer"
   }
 }

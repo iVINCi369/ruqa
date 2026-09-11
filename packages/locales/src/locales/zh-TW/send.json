@@ -32,7 +32,8 @@
     "sendTexts_one": "傳送 {{count}} 則文字",
     "sendTexts_other": "傳送 {{count}} 則文字",
     "sendItems_one": "傳送 {{count}} 項",
-    "sendItems_other": "傳送 {{count}} 項"
+    "sendItems_other": "傳送 {{count}} 項",
+    "showCode": "顯示配對碼"
   },
   "status": {
     "waitingForPeer": "等待接收方",
@@ -116,5 +117,14 @@
     "removeLabel": "删除{{name}}",
     "addedText": "已新增文字",
     "tooMany": "檔案太多，無法傳送。請先壓縮成一個壓縮檔。"
+  },
+  "nearby": {
+    "title": "附近",
+    "searching": "正在此網路中尋找裝置…",
+    "off": "探索功能已關閉 — 請在連線設定中開啟",
+    "selectFirst": "請先選擇檔案",
+    "accepted": "已接受",
+    "declined": "已拒絕",
+    "noAnswer": "沒有回應"
   }
 }

@@ -12,6 +12,21 @@
     "dark": "深色",
     "system": "跟随系统"
   },
+  "zoom": {
+    "label": "界面缩放",
+    "description": "整体放大或缩小",
+    "decrease": "缩小",
+    "increase": "放大"
+  },
+  "lan": {
+    "title": "附近的设备",
+    "off": "关闭",
+    "offHint": "Ruqa 既不搜索设备，也不响应请求",
+    "paired": "仅已配对",
+    "pairedHint": "只有列表中的设备才能打开对话框",
+    "all": "此网络中的所有人",
+    "allHint": "附近的任何人都可以发起传输"
+  },
   "crashReports": {
     "label": "崩溃报告",
     "description": "共享匿名崩溃数据以帮助改进Ruqa"
@@ -58,9 +73,6 @@
   "rows": {
     "feedback": "反馈",
     "feedbackHint": "报告问题或建议功能",
-    "discord": "Discord",
-    "x": "X",
-    "discordHint": "加入社区",
     "github": "GitHub",
     "sponsor": "支持 Ruqa",
     "privacyPolicy": "隐私政策",

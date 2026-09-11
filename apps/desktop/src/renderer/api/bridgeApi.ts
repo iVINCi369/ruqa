@@ -113,6 +113,12 @@ export const bridgeApi = {
   setThemePreference(preference: string) {
     return requireBridge().setThemePreference(preference)
   },
+  getZoom() {
+    return requireBridge().getZoom()
+  },
+  setZoom(factor: number) {
+    return requireBridge().setZoom(factor)
+  },
   requestCameraAccess() {
     return requireBridge().requestCameraAccess()
   },

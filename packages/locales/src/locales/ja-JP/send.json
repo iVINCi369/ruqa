@@ -32,7 +32,8 @@
     "sendTexts_one": "{{count}} 件のテキストを送信",
     "sendTexts_other": "{{count}} 件のテキストを送信",
     "sendItems_one": "{{count}} 個のアイテムを送信",
-    "sendItems_other": "{{count}} 個のアイテムを送信"
+    "sendItems_other": "{{count}} 個のアイテムを送信",
+    "showCode": "コードを表示"
   },
   "status": {
     "waitingForPeer": "受信者を待機中",
@@ -116,5 +117,14 @@
     "removeLabel": "{{name}} を削除",
     "addedText": "追加したテキスト",
     "tooMany": "送信するファイルが多すぎます。まずアーカイブに圧縮してください。"
+  },
+  "nearby": {
+    "title": "近く",
+    "searching": "このネットワークでデバイスを探しています…",
+    "off": "探索がオフです。接続設定でオンにしてください",
+    "selectFirst": "先にファイルを選んでください",
+    "accepted": "受け入れられました",
+    "declined": "拒否されました",
+    "noAnswer": "応答なし"
   }
 }

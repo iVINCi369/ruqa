@@ -7,8 +7,10 @@ export * from './externalFiles'
 export * from './useExternalFileHandoff'
 export * from './sessionUi'
 export {
+  applyLanVisibility,
   bindTransferApi,
   loadPeers,
+  respondToLanInvite,
   whenTransferReady,
   type TransferApi,
   type BindTransferApiOptions,

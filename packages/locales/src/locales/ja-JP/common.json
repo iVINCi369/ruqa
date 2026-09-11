@@ -30,7 +30,9 @@
     "add": "追加",
     "showMore": "もっと見る",
     "showLess": "折りたたむ",
-    "learnMore": "詳細を見る"
+    "learnMore": "詳細を見る",
+    "decline": "拒否",
+    "accept": "受け入れる"
   },
   "labels": {
     "settings": "設定",
@@ -47,7 +49,11 @@
     "mobile": "モバイル端末",
     "send": "送信",
     "receive": "受信",
-    "connectionCode": "接続コード"
+    "connectionCode": "接続コード",
+    "nearbyDevice": "近くのデバイス",
+    "onThisNetwork": "このネットワーク",
+    "directLink": "直接",
+    "viaRelay": "リレー経由"
   },
   "files": {
     "folder": "フォルダ",

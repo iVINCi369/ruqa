@@ -24,6 +24,8 @@ export interface BridgeStream {
   socket: BridgeSocket
   /** Байты, прочитанные вместе со строкой ответа и ещё не разобранные. */
   rest: Uint8Array
+  /** Разобранная строка ответа: у части операций в ней есть результат. */
+  reply: Record<string, unknown>
 }
 
 export interface BridgeEvent {
@@ -36,6 +38,18 @@ export interface BridgeEvent {
   binding?: string
   path?: string
   message?: string
+  /** conn-type: каким путём реально идут данные — 'direct' или 'relay'. */
+  connectionType?: string
+  /** Соседи в локальной сети: lan-peer / lan-peer-gone / lan-invite. */
+  requestId?: number
+  userData?: string
+  addrs?: string[]
+  topic?: string
+  displayName?: string
+  deviceType?: string
+  fileCount?: number
+  textCount?: number
+  totalSize?: number
 }
 
 const NEWLINE = 0x0a
@@ -94,7 +108,7 @@ export class IrohBridge {
           reject(new Error('iroh-bridge отказал: ' + b4a.toString(buf.subarray(0, nl))))
           return
         }
-        resolve({ socket, rest })
+        resolve({ socket, rest, reply })
       }
 
       socket.on('data', onData)
@@ -111,6 +125,16 @@ export class IrohBridge {
   async command(op: Record<string, unknown>): Promise<void> {
     const stream = await this.dial(op)
     stream.socket.end()
+  }
+
+  /**
+   * Команда, у которой важен ответ, а не поток: lan-invite возвращает решение
+   * соседа по тому же соединению, отдельного события ждать не нужно.
+   */
+  async request(op: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const stream = await this.dial(op)
+    stream.socket.end()
+    return stream.reply
   }
 
   /** Новый исходящий QUIC-стрим; первая строка говорит, зачем он открыт. */

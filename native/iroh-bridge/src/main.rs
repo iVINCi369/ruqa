@@ -11,6 +11,15 @@
 //!   {"op":"leave"}                          — закрыть Endpoint
 //!   {"op":"open"}                           — открыть новый bi-stream к пиру
 //!   {"op":"attach","id":N}                  — принять входящий bi-stream N
+//!
+//! Локальная сеть (соседи без кода, отдельный Endpoint на ключе устройства):
+//!   {"op":"lan-start","secret":hex,"userData":str} — светиться и слушать
+//!   {"op":"lan-stop"}                              — погасить
+//!   {"op":"lan-invite","endpointId":..,"topic":hex,...} — позвать соседа
+//!   {"op":"lan-respond","requestId":N,"response":"accepted"|"declined"}
+//!
+//! События о путях: {"event":"conn-type","connectionType":"direct"|"relay"} —
+//! каким путём реально идут данные прямо сейчас.
 //! Сервер отвечает одной строкой {"ok":true,...}, дальше — сырой поток.
 //!
 //! У каждой операции есть необязательное поле `"session"` (по умолчанию
@@ -19,6 +28,8 @@
 //! не должны выбивать друг друга. Все события несут то же поле `session`,
 //! клиент обязан отбирать свои.
 
+mod lan;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -26,6 +37,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use anyhow::{Context, Result, anyhow};
 use iroh::endpoint::{Connection, RecvStream, SendStream, presets};
 use iroh::{Endpoint, EndpointAddr, RelayMode, SecretKey, TransportAddr};
+use futures_lite::StreamExt;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Mutex, broadcast, watch};
@@ -63,7 +75,30 @@ fn parse_args() -> Result<Args> {
     Ok(a)
 }
 
-fn hex_to_key(s: &str) -> Result<SecretKey> {
+/// Метка домена для ключа хоста: отделяет его от самого join-кода.
+const HOST_KEY_CONTEXT: &[u8] = b"ruqa-iroh-host-v1";
+
+/// Ключ хоста из join-кода: blake3(метка || код).
+fn derive_host_secret(topic: &str) -> Result<SecretKey> {
+    let raw = hex_to_bytes(topic)?;
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(HOST_KEY_CONTEXT);
+    hasher.update(&raw);
+    Ok(SecretKey::from_bytes(hasher.finalize().as_bytes()))
+}
+
+fn hex_to_bytes(s: &str) -> Result<[u8; 32]> {
+    if s.len() != 64 {
+        return Err(anyhow!("topic must be 32 bytes hex"));
+    }
+    let raw = (0..s.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&s[i..i + 2], 16))
+        .collect::<Result<Vec<u8>, _>>()?;
+    raw.as_slice().try_into().map_err(|_| anyhow!("bad topic"))
+}
+
+pub(crate) fn hex_to_key(s: &str) -> Result<SecretKey> {
     if s.len() != 64 {
         return Err(anyhow!("topic must be 32 bytes hex"));
     }
@@ -101,6 +136,7 @@ async fn main() -> Result<()> {
     let args = parse_args()?;
     let (events_tx, _) = broadcast::channel::<String>(256);
     let node: Shared = Arc::new(Mutex::new(HashMap::new()));
+    let lan_state: lan::SharedLan = Arc::new(Mutex::new(None));
 
     let bridge = TcpListener::bind(("127.0.0.1", args.bridge_port)).await?;
     let bridge_port = bridge.local_addr()?.port();
@@ -120,9 +156,10 @@ async fn main() -> Result<()> {
         let (sock, _) = bridge.accept().await?;
         let events_tx = events_tx.clone();
         let node = node.clone();
+        let lan_state = lan_state.clone();
         let cfg = cfg.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_bridge(sock, events_tx, node, cfg).await {
+            if let Err(e) = handle_bridge(sock, events_tx, node, lan_state, cfg).await {
                 eprintln!("bridge conn error: {e:#}");
             }
         });
@@ -175,6 +212,42 @@ fn channel_binding(conn: &Connection) -> Option<String> {
     let mut out = [0u8; 32];
     conn.export_keying_material(&mut out, BINDING_LABEL, &[]).ok()?;
     Some(to_hex(&out))
+}
+
+/// Следит, каким путём реально идут данные.
+///
+/// iroh начинает через релей и молча переезжает на прямой путь, когда пробивка
+/// удалась, — поэтому один замер в момент подключения врёт. Смотрим на
+/// выбранный путь всё время, пока соединение живо: `paths_stream` отдаёт
+/// снапшот сразу и потом на каждое изменение.
+fn spawn_path_watcher(events: broadcast::Sender<String>, session: String, conn: Connection) {
+    tokio::spawn(async move {
+        let endpoint_id = conn.remote_id().to_string();
+        let mut last: Option<&'static str> = None;
+        let mut paths = conn.paths_stream();
+
+        while let Some(snapshot) = paths.next().await {
+            let kind = match snapshot.iter().find(|path| path.is_selected()) {
+                Some(path) if path.is_relay() => "relay",
+                Some(_) => "direct",
+                // Выбранного пути ещё нет — сказать нечего, ждём следующий снимок.
+                None => continue,
+            };
+            if last == Some(kind) {
+                continue;
+            }
+            last = Some(kind);
+            let _ = events.send(
+                serde_json::json!({
+                    "event": "conn-type",
+                    "session": session,
+                    "endpointId": endpoint_id,
+                    "connectionType": kind,
+                })
+                .to_string(),
+            );
+        }
+    });
 }
 
 fn announce_peer(
@@ -246,10 +319,17 @@ async fn join(
 ) -> Result<serde_json::Value> {
     leave(node, Some(session)).await;
 
-    // ВНИМАНИЕ: join-код здесь напрямую становится секретным ключом хоста, поэтому
-    // гость выводит EndpointId из кода без всякого обмена. Для продакшена так нельзя —
-    // владелец кода может представиться хостом. Нужен HKDF от кода и topic-auth.
-    let host_secret = hex_to_key(topic)?;
+    // Ключ хоста выводится из join-кода хешем с меткой, а не берётся из кода
+    // напрямую: один и тот же секрет в двух разных ролях — плохая идея, и
+    // утечка одного не должна раскрывать другой.
+    //
+    // ВНИМАНИЕ, это не решает главного: личность хоста всё ещё выводима из
+    // кода, поэтому любой, кто код увидел (подсмотрел QR, получил скриншот),
+    // может поднять Endpoint с той же личностью и принять гостя вместо хоста.
+    // Лечится только тем, что код несёт ПУБЛИЧНЫЙ ключ хоста, а секретный
+    // хост генерирует случайно, — а это смена смысла кода и порядка его
+    // выдачи. Разбор в claude/join-code-identity.md.
+    let host_secret = derive_host_secret(topic)?;
     let host_id = host_secret.public();
 
     let secret = if role == "host" { host_secret } else { SecretKey::generate() };
@@ -269,6 +349,7 @@ async fn join(
                 match incoming.await {
                     Ok(conn) => {
                         announce_peer(&events, &session, &conn, "in");
+                        spawn_path_watcher(events.clone(), session.clone(), conn.clone());
                         let _ = conn_tx.send(Some(conn));
                     }
                     Err(e) => {
@@ -297,6 +378,7 @@ async fn join(
             match ep.connect(target, ALPN).await {
                 Ok(conn) => {
                     announce_peer(&events, &session, &conn, "out");
+                    spawn_path_watcher(events.clone(), session.clone(), conn.clone());
                     let _ = conn_tx.send(Some(conn));
                 }
                 Err(e) => {
@@ -337,6 +419,7 @@ async fn handle_bridge(
     sock: TcpStream,
     events_tx: broadcast::Sender<String>,
     node: Shared,
+    lan_state: lan::SharedLan,
     cfg: Arc<Args>,
 ) -> Result<()> {
     sock.set_nodelay(true)?;
@@ -406,6 +489,52 @@ async fn handle_bridge(
             };
             w.write_all(b"{\"ok\":true}\n").await?;
             pipe(reader, w, send, recv).await
+        }
+        "lan-start" => {
+            let secret = req["secret"].as_str().context("lan-start needs secret")?;
+            let user_data = req["userData"].as_str().unwrap_or("{}");
+            let reply =
+                lan::start(&events_tx, &lan_state, secret, user_data, cfg.offline).await?;
+            w.write_all(reply.to_string().as_bytes()).await?;
+            w.write_all(b"\n").await?;
+            Ok(())
+        }
+        "lan-stop" => {
+            lan::stop(&lan_state).await;
+            w.write_all(b"{\"ok\":true}\n").await?;
+            Ok(())
+        }
+        "lan-invite" => {
+            let endpoint_id = req["endpointId"].as_str().context("lan-invite needs endpointId")?;
+            let hints: Vec<std::net::SocketAddr> = req["addrs"]
+                .as_array()
+                .map(|list| {
+                    list.iter()
+                        .filter_map(|v| v.as_str())
+                        .filter_map(|s| s.parse().ok())
+                        .collect()
+                })
+                .unwrap_or_default();
+            let payload = serde_json::json!({
+                "topic": req["topic"],
+                "displayName": req["displayName"],
+                "deviceType": req["deviceType"],
+                "fileCount": req["fileCount"],
+                "textCount": req["textCount"],
+                "totalSize": req["totalSize"],
+            });
+            let reply = lan::invite(&lan_state, endpoint_id, hints, payload).await?;
+            w.write_all(reply.to_string().as_bytes()).await?;
+            w.write_all(b"\n").await?;
+            Ok(())
+        }
+        "lan-respond" => {
+            let id = req["requestId"].as_u64().context("lan-respond needs requestId")?;
+            let response = req["response"].as_str().unwrap_or("declined");
+            let reply = lan::respond(&lan_state, id, response).await?;
+            w.write_all(reply.to_string().as_bytes()).await?;
+            w.write_all(b"\n").await?;
+            Ok(())
         }
         other => Err(anyhow!("unknown op {other}")),
     }

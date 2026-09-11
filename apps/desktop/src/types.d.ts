@@ -89,6 +89,8 @@ declare global {
     openExternalUrl: (url: string) => Promise<void>
     setSentryEnabled: (enabled: boolean) => Promise<void>
     setThemePreference: (preference: string) => Promise<void>
+    getZoom: () => Promise<{ factor: number; steps: number[] }>
+    setZoom: (factor: number) => Promise<number>
     requestCameraAccess: () => Promise<boolean>
     clipboardReadText: () => Promise<string>
   }

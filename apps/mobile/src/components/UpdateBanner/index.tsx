@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { Button, useTheme } from '@ruqa/components'
 import { useTranslation } from '@ruqa/locales'
-import { appStoreUrl, playStoreUrl } from '@ruqa/domain'
-import { Linking, Platform, StyleSheet, View } from 'react-native'
+import { releasesUrl } from '@ruqa/domain'
+import { Linking, StyleSheet, View } from 'react-native'
 import { useUpdateCheck } from '../../hooks/useUpdateCheck'
 import { BottomSheet } from '../BottomSheet'
 import { Text } from '@/src/components/ThemedText'
 import UpdateSvg from '../../../../../assets/update.svg'
-
-const STORE_URL = Platform.OS === 'ios' ? appStoreUrl : playStoreUrl
 
 export function UpdateBanner() {
   const { t } = useTranslation(['common'])
@@ -24,8 +22,8 @@ export function UpdateBanner() {
 
   const handleUpdate = () => {
     handleDismiss()
-    void Linking.openURL(STORE_URL).catch((err) => {
-      console.warn('UpdateBanner: failed to open store URL', err)
+    void Linking.openURL(releasesUrl).catch((err) => {
+      console.warn('UpdateBanner: failed to open releases URL', err)
     })
   }
 

@@ -30,6 +30,27 @@ export const styles = css.create({
     borderColor: tokens.colorInfo,
     backgroundColor: tokens.colorInfoSubtle
   },
+  // Без рамки: ронять можно в любое место экрана, поэтому пунктирная коробка
+  // только съедала бы место и обманывала — она не была границей зоны.
+  cardFrameless: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    paddingTop: tokens.space6,
+    paddingBottom: tokens.space6,
+    ':hover': {
+      borderColor: 'transparent',
+      backgroundColor: tokens.colorSurfaceSecondary
+    }
+  },
+  cardFramelessActive: {
+    borderWidth: 0,
+    borderColor: 'transparent',
+    backgroundColor: tokens.colorInfoSubtle
+  },
+  cardFill: {
+    flexGrow: 1,
+    height: '100%'
+  },
   cardHasFile: {
     paddingTop: tokens.space6,
     paddingBottom: tokens.space6,

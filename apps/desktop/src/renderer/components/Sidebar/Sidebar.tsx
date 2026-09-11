@@ -11,6 +11,7 @@ import logoMarkOnLight from '../../../../../../assets/ruqa-logo-dark.png'
 import logoMarkOnDark from '../../../../../../assets/ruqa-logo.png'
 import { Button, ListItem, ThemeType, useTheme } from '@ruqa/components'
 import { openSettingsPanel } from '../Settings'
+import { bridgeApi } from '../../api/bridgeApi'
 
 export type TransferTab = 'send' | 'receive'
 
@@ -29,21 +30,24 @@ export function Sidebar({
   const { themeType } = useTheme()
   const role = useTransferStore((s) => s.role)
   const logoMark = themeType === ThemeType.Light ? logoMarkOnLight : logoMarkOnDark
+  // Полосу под перетаскивание окна держим ровно такой, какой она нужна:
+  // на macOS под ней светофор, на остальных системах это просто захват.
+  const dragStripHeight = bridgeApi.platform() === 'darwin' ? 'h-11' : 'h-8'
   const toggleLabel = collapsed
     ? t('common:labels.expandSidebar')
     : t('common:labels.collapseSidebar')
 
   return (
     <aside
-      className={`flex h-screen shrink-0 flex-col border-r border-border-primary bg-background-deep pb-[30px] transition-[width] duration-200 ease-out ${
-        collapsed ? 'w-[74px]' : 'w-[244px]'
+      className={`flex h-screen shrink-0 flex-col border-r border-border-primary bg-background-deep pb-4 transition-[width] duration-200 ease-out ${
+        collapsed ? 'w-[56px]' : 'w-[204px]'
       }`}
     >
-      <div className='h-11 shrink-0' style={{ WebkitAppRegion: 'drag' }} />
+      <div className={`${dragStripHeight} shrink-0`} style={{ WebkitAppRegion: 'drag' }} />
 
       <div
         className={`flex shrink-0 items-center ${
-          collapsed ? 'justify-center px-3' : 'justify-between gap-2.5 px-4'
+          collapsed ? 'justify-center px-2' : 'justify-between gap-2 px-3'
         }`}
       >
         {!collapsed && (
@@ -71,10 +75,10 @@ export function Sidebar({
         )}
       </div>
 
-      {collapsed && <div className='mx-3 mt-3 border-t border-border-primary' />}
+      {collapsed && <div className='mx-2 mt-2 border-t border-border-primary' />}
 
       <nav
-        className={`flex flex-col gap-1 px-3 ${collapsed ? 'items-center pt-3' : 'pt-8'}`}
+        className={`flex flex-col gap-0.5 ${collapsed ? 'items-center px-2 pt-2' : 'px-3 pt-5'}`}
         aria-label={t('common:labels.transferMode')}
       >
         <ListItem
@@ -99,7 +103,7 @@ export function Sidebar({
 
       <div className='flex-1' />
 
-      <div className={`flex flex-col gap-1 px-3 ${collapsed ? 'items-center' : ''}`}>
+      <div className={`flex flex-col gap-0.5 ${collapsed ? 'items-center px-2' : 'px-3'}`}>
         <ListItem
           icon={<SlidersHorizontalIcon size={18} />}
           label={t('common:labels.settings')}

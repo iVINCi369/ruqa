@@ -5,6 +5,7 @@ import { isLinux, isMac } from 'which-runtime'
 import { forgetPickedPaths } from './pathAccess.js'
 import { isQuitting, noteWindowHidden, trayActive } from './tray.js'
 import { applyThemeSource, loadThemeSource, windowBackgroundColor } from './theme.js'
+import { applyZoomFactor, currentZoomFactor, loadZoomFactor, stepZoomFactor } from './zoom.js'
 import type { PearRuntimeInstance } from './runtime.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -24,6 +25,7 @@ export async function createMainWindow(pear: PearRuntimeInstance) {
   const width = Math.min(980, workAreaWidth)
   const height = Math.min(792, workAreaHeight)
   applyThemeSource(await loadThemeSource())
+  await loadZoomFactor()
   const win = new BrowserWindow({
     width,
     height,
@@ -32,6 +34,11 @@ export async function createMainWindow(pear: PearRuntimeInstance) {
     show: false,
     backgroundColor: windowBackgroundColor(),
     titleBarStyle: 'hiddenInset',
+    // На Windows и Linux Electron рисует меню-бар с File/Edit/View, которым
+    // приложение не пользуется, а полосу сверху он занимает. Прячем, но не
+    // сносим: акселераторы редактирования живут в меню, и по Alt оно
+    // по-прежнему доступно. На macOS меню системное, его не трогаем.
+    autoHideMenuBar: !isMac,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       sandbox: !isLinux,
@@ -46,6 +53,25 @@ export async function createMainWindow(pear: PearRuntimeInstance) {
     callback(allowedPermissions.has(permission))
   )
   session.setPermissionCheckHandler((_wc, permission) => allowedPermissions.has(permission))
+
+  // Множитель живёт на webContents и сбрасывается при каждой загрузке
+  // страницы, поэтому ставим его на did-finish-load, а не один раз.
+  win.webContents.on('did-finish-load', () => applyZoomFactor(win, currentZoomFactor()))
+
+  // Ctrl/Cmd с +, − и 0 — там же, где их ждут по привычке из браузера.
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return
+    const modifier = isMac ? input.meta : input.control
+    if (!modifier || input.alt) return
+
+    const key = input.key
+    if (key === '=' || key === '+') stepZoomFactor(1)
+    else if (key === '-' || key === '_') stepZoomFactor(-1)
+    else if (key === '0') stepZoomFactor(0)
+    else return
+
+    event.preventDefault()
+  })
 
   const showWindow = () => {
     if (!win.isDestroyed() && !win.isVisible()) win.show()

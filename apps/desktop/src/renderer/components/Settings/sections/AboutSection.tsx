@@ -1,13 +1,11 @@
 import { MenuGroup, MenuItem, useTheme } from '@ruqa/components'
 import {
   ArrowUpRightIcon,
-  DiscordIcon,
   FileTextIcon,
   GithubIcon,
   GlobeIcon,
   HeartIcon,
-  LockIcon,
-  XIcon
+  LockIcon
 } from '@ruqa/components/icons'
 import type { IconComponent } from '@ruqa/components/icons'
 import { useTranslation } from '@ruqa/locales'
@@ -19,8 +17,6 @@ import { SectionShell } from './SectionShell'
 const linkIcons: Record<AboutLinkKey, IconComponent> = {
   website: GlobeIcon,
   github: GithubIcon,
-  discord: DiscordIcon,
-  x: XIcon,
   sponsor: HeartIcon,
   privacy: LockIcon,
   terms: FileTextIcon

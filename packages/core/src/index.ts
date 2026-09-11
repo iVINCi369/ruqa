@@ -31,8 +31,15 @@ export type {
   InviteResponseReply,
   RenamePeerInput,
   InitDeviceSecretReply,
-  DeviceSecretInit
+  DeviceSecretInit,
+  LanInviteInput,
+  LanInviteReply,
+  LanInviteResponseInput,
+  SetLanVisibilityInput
 } from './worklet/rpc/protocol'
+
+export type { LanPeer } from './worklet/peers/lan-peer'
+export type { LanVisibility } from './worklet/peers/lan-coordinator'
 
 export { TRANSFER_ERROR_CODES } from './worklet/rpc/events'
 export type { TransferStatus, TransferErrorCode } from './worklet/rpc/events'

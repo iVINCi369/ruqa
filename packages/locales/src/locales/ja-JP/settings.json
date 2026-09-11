@@ -12,6 +12,21 @@
     "dark": "ダーク",
     "system": "システム"
   },
+  "zoom": {
+    "label": "表示サイズ",
+    "description": "全体を大きく、または小さくします",
+    "decrease": "小さく",
+    "increase": "大きく"
+  },
+  "lan": {
+    "title": "近くのデバイス",
+    "off": "オフ",
+    "offHint": "デバイスを探さず、リクエストにも応答しません",
+    "paired": "ペアリング済みのみ",
+    "pairedHint": "リストにあるデバイスだけがダイアログを開けます",
+    "all": "このネットワークの全員",
+    "allHint": "近くの誰でも転送を申し込めます"
+  },
   "crashReports": {
     "label": "クラッシュレポート",
     "description": "Ruqa 改善のため匿名のクラッシュデータを共有する"
@@ -58,9 +73,6 @@
   "rows": {
     "feedback": "フィードバック",
     "feedbackHint": "問題を報告または機能を提案",
-    "discord": "Discord",
-    "x": "X",
-    "discordHint": "コミュニティに参加",
     "github": "GitHub",
     "sponsor": "Ruqaを支援する",
     "privacyPolicy": "プライバシーポリシー",

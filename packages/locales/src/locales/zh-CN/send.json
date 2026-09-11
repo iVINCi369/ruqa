@@ -32,7 +32,8 @@
     "sendTexts_one": "发送 {{count}} 条文本",
     "sendTexts_other": "发送 {{count}} 条文本",
     "sendItems_one": "发送 {{count}} 项",
-    "sendItems_other": "发送 {{count}} 项"
+    "sendItems_other": "发送 {{count}} 项",
+    "showCode": "显示配对码"
   },
   "status": {
     "waitingForPeer": "等待接收方",
@@ -116,5 +117,14 @@
     "removeLabel": "删除{{name}}",
     "addedText": "已添加文本",
     "tooMany": "文件太多，无法发送。请先压缩成一个压缩包。"
+  },
+  "nearby": {
+    "title": "附近",
+    "searching": "正在此网络中查找设备…",
+    "off": "发现功能已关闭 — 请在连接设置中开启",
+    "selectFirst": "请先选择文件",
+    "accepted": "已接受",
+    "declined": "已拒绝",
+    "noAnswer": "没有回应"
   }
 }

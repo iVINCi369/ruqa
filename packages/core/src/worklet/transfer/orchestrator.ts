@@ -20,6 +20,10 @@ import type {
   InviteDeviceReply,
   InviteResponseInput,
   InviteResponseReply,
+  LanInviteInput,
+  LanInviteReply,
+  LanInviteResponseInput,
+  SetLanVisibilityInput,
   InitDeviceSecretReply,
   JoinReply,
   RememberVoteInput,
@@ -74,6 +78,8 @@ import { MAX_DISPLAY_NAME_LEN, type RememberedPeer } from '../peers/remembered-p
 import { RememberCoordinator } from '../peers/remember-coordinator'
 import { RecognitionCoordinator } from '../peers/recognition-coordinator'
 import { DiscoveryCoordinator } from '../peers/discovery'
+import { LanCoordinator, type LanVisibility } from '../peers/lan-coordinator'
+import type { LanPeer } from '../peers/lan-peer'
 import { PairingCoordinator } from '../peers/pairing-coordinator'
 import { configureRelay, relayConfigSummary, setRelaySending } from '../relay/config'
 import { applyCustomRelay } from '../relay/conf'
@@ -140,6 +146,7 @@ export class TransferOrchestrator implements TransferRPC {
   private readonly recognition: RecognitionCoordinator
   private readonly remember: RememberCoordinator
   private readonly discovery: DiscoveryCoordinator
+  private readonly lan: LanCoordinator
 
   private readonly pairing: PairingCoordinator
 
@@ -185,6 +192,15 @@ export class TransferOrchestrator implements TransferRPC {
       emit: (event) => this.emitIPC(event)
     })
 
+    // Соседи по локальной сети — второй, независимый источник приглашений:
+    // сопряжения не требует, интернета тоже.
+    this.lan = new LanCoordinator({
+      deviceIdentityStore: this.deviceIdentityStore,
+      rememberedStore: this.rememberedStore,
+      irohBridgePort: options.irohBridgePort,
+      emit: (event) => this.emitIPC(event)
+    })
+
     this.recognition = new RecognitionCoordinator({
       deviceIdentityStore: this.deviceIdentityStore,
       rememberedStore: this.rememberedStore,
@@ -214,6 +230,7 @@ export class TransferOrchestrator implements TransferRPC {
     })
 
     this.discovery.start()
+    void this.lan.start()
   }
 
   hostPairing(): Promise<HostReply> {
@@ -293,6 +310,35 @@ export class TransferOrchestrator implements TransferRPC {
 
   respondToInvite(input: InviteResponseInput): Promise<InviteResponseReply> {
     return this.discovery.respondToInvite(input.remoteDevicePubkey, input.topic, input.response)
+  }
+
+  lanPeers(): LanPeer[] {
+    return this.lan.list()
+  }
+
+  lanVisibility(): LanVisibility {
+    return this.lan.currentVisibility()
+  }
+
+  setLanVisibility(input: SetLanVisibilityInput): Promise<void> {
+    if (!input || typeof input !== 'object') {
+      throw new BadRequestError('Missing lan visibility input')
+    }
+    return this.lan.setVisibility(input.visibility)
+  }
+
+  lanInvite(input: LanInviteInput): Promise<LanInviteReply> {
+    if (!input || typeof input !== 'object') throw new BadRequestError('Missing lan invite input')
+    return this.lan.invite(input.endpointId, input.topic, {
+      ...(input.fileCount !== undefined ? { fileCount: input.fileCount } : {}),
+      ...(input.textCount !== undefined ? { textCount: input.textCount } : {}),
+      ...(input.totalSize !== undefined ? { totalSize: input.totalSize } : {})
+    })
+  }
+
+  async respondToLanInvite(input: LanInviteResponseInput): Promise<void> {
+    if (!input || typeof input !== 'object') throw new BadRequestError('Missing lan response input')
+    await this.lan.respond(input.requestId, input.response)
   }
 
   private onPeerDisconnected(peerKey: string | null, remainingCount: number): void {
@@ -750,6 +796,9 @@ export class TransferOrchestrator implements TransferRPC {
       this.recognition.reset()
       this.remember.reset()
 
+      await tryAsyncWithin('lan.stop (suspend)', LIFECYCLE_TEARDOWN_TIMEOUT_MS, () =>
+        this.lan.stop()
+      )
       await tryAsyncWithin('discovery.stop (suspend)', LIFECYCLE_TEARDOWN_TIMEOUT_MS, () =>
         this.discovery.stop()
       )
@@ -765,6 +814,7 @@ export class TransferOrchestrator implements TransferRPC {
 
       this.suspended = false
       this.discovery.start()
+      void this.lan.start()
 
       const interrupted = this.interruptedDownloads
       this.interruptedDownloads = []
@@ -794,6 +844,7 @@ export class TransferOrchestrator implements TransferRPC {
     this.currentTopic = null
     this.setRole(null)
 
+    await tryAsync('lan.stop', () => this.lan.stop())
     await tryAsync('discovery.stop', () => this.discovery.stop())
     await tryAsync('swarm.endSession', () => this.swarm.endSession())
     await tryAsync('pairing.destroy', () => this.pairing.destroy())

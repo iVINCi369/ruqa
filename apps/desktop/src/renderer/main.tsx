@@ -16,7 +16,12 @@ import {
   resolveLocalePreference,
   useTranslation
 } from '@ruqa/locales'
-import { bindTransferApi, startBackgroundReconnectEffect, startPeerWatchdog } from '@ruqa/domain'
+import {
+  applyLanVisibility,
+  bindTransferApi,
+  startBackgroundReconnectEffect,
+  startPeerWatchdog
+} from '@ruqa/domain'
 import App from './App.js'
 import { bridgeApi, hasBridge } from './api/bridgeApi'
 import { startDeepLinkHandler } from './lifecycle/deepLinkHandler'
@@ -24,6 +29,8 @@ import { initSentry, captureException } from './sentry'
 import { isCrashReportingEnabled } from './lifecycle/crashReportingStorage'
 import { getCustomRelay, getCustomRelayFallback, isRelayEnabled } from './lifecycle/relayStorage'
 import { startAccountSync } from './lifecycle/account'
+import { getLanVisibility } from './lifecycle/lanVisibilityStorage'
+import { startConnectionTypeReport } from './lifecycle/connectionTypeReport'
 import { getSavedLocalePreference } from './lifecycle/localePreferenceStorage'
 import { getSavedThemePreference, setSavedThemePreference } from './lifecycle/themeStorage'
 import { getDesktopSystemLocales } from './lifecycle/systemLocale'
@@ -95,6 +102,10 @@ if (hasBridge()) {
       customRelayFallback: getCustomRelayFallback()
     })
     .catch((err) => captureException(err, 'setRelayConfig'))
+  // Поднимает сессию локальной сети в сохранённом режиме: без этого вызова
+  // координатор соседей не запускается вовсе и список всегда пуст.
+  void applyLanVisibility(getLanVisibility())
+  startConnectionTypeReport()
   startAccountSync()
   startPeerWatchdog()
   startBackgroundReconnectEffect()

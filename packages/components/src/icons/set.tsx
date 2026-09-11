@@ -37,6 +37,7 @@ import {
   Monitor,
   Moon,
   MoreHorizontal,
+  Minus,
   MoreVertical,
   Music,
   PanelLeft,
@@ -65,6 +66,7 @@ import {
   Upload,
   Video,
   Waypoints,
+  Wifi,
   WifiOff,
   X,
   XCircle
@@ -120,6 +122,7 @@ export const PauseIcon = adaptLucide(Pause)
 export const PencilIcon = adaptLucide(Pencil)
 export const PlayIcon = adaptLucide(Play)
 export const PlusIcon = adaptLucide(Plus)
+export const MinusIcon = adaptLucide(Minus)
 export const QrCodeIcon = adaptLucide(QrCode)
 export const SendIcon = adaptLucide(Send)
 export const SettingsIcon = adaptLucide(Settings)
@@ -137,6 +140,7 @@ export const VideoIcon = adaptLucide(Video)
 export const WaypointsIcon = adaptLucide(Waypoints)
 export const CloseIcon = adaptLucide(X)
 export const RotateCwIcon = adaptLucide(RotateCw)
+export const WifiIcon = adaptLucide(Wifi)
 export const WifiOffIcon = adaptLucide(WifiOff)
 export const XCircleIcon = adaptLucide(XCircle)
 export const UnlinkIcon = adaptLucide(Unlink)

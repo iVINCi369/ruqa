@@ -12,6 +12,12 @@ import { getFontFamilyCssVariables } from './fontCssVariables'
 import { rawTokens } from './tokens.raw'
 import tokenSource from './tokens.json'
 
+// Рабочее дерево на Windows лежит в CRLF, а ожидания в тестах записаны
+// с \n: читаем исходники через нормализацию, иначе совпадений нет.
+function readSource(url: URL): string {
+  return readFileSync(url, 'utf8').replace(/\r\n/g, '\n')
+}
+
 describe('font family tokens', () => {
   it('uses the native Latin stack for default sans and display UI text', () => {
     expect(rawTokens.fontFamily.fontFamilySans).toBe(LATIN_FONT_FAMILY_CSS)
@@ -77,10 +83,7 @@ describe('font family tokens', () => {
   })
 
   it('keeps native UI font stacks compatible with React Native', () => {
-    const nativeTokenSource = readFileSync(
-      new URL('./tokens.css.native.ts', import.meta.url),
-      'utf8'
-    )
+    const nativeTokenSource = readSource(new URL('./tokens.css.native.ts', import.meta.url))
 
     expect(nativeTokenSource).toContain('export const nativeFontFamilies')
 
@@ -105,9 +108,8 @@ describe('font family tokens', () => {
   })
 
   it('keeps mobile Metro pointed at component source so Android Input is selectable', () => {
-    const metroSource = readFileSync(
-      new URL('../../../../apps/mobile/metro.config.js', import.meta.url),
-      'utf8'
+    const metroSource = readSource(
+      new URL('../../../../apps/mobile/metro.config.js', import.meta.url)
     )
 
     expect(metroSource).toContain("'@ruqa/components'")
@@ -116,11 +118,8 @@ describe('font family tokens', () => {
   })
 
   it('does not pass CSS-quoted font family names to React Native font themes', () => {
-    const webFontThemeSource = readFileSync(new URL('./fontThemes.css.ts', import.meta.url), 'utf8')
-    const nativeFontThemeSource = readFileSync(
-      new URL('./fontThemes.css.native.ts', import.meta.url),
-      'utf8'
-    )
+    const webFontThemeSource = readSource(new URL('./fontThemes.css.ts', import.meta.url))
+    const nativeFontThemeSource = readSource(new URL('./fontThemes.css.native.ts', import.meta.url))
 
     expect(webFontThemeSource).toContain('fontFamilySans: \'"Ruqa Sans KR"\'')
     expect(webFontThemeSource).toContain('fontFamilyMono:\n    \'ui-monospace, "SFMono-Regular"')
@@ -152,7 +151,7 @@ describe('font family tokens', () => {
   })
 
   it('centralizes web font synchronization in ThemeProvider', () => {
-    const themeContextSource = readFileSync(new URL('./ThemeContext.tsx', import.meta.url), 'utf8')
+    const themeContextSource = readSource(new URL('./ThemeContext.tsx', import.meta.url))
 
     expect(themeContextSource).toContain('getFontFamilyCssVariables')
     expect(themeContextSource).toContain('document.documentElement')

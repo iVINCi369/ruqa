@@ -1,9 +1,12 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-const repoRoot = new URL('../../..', import.meta.url)
-const mobileRoot = new URL('apps/mobile', repoRoot)
+// URL.pathname на Windows даёт «/D:/...», и join склеивает «D:\D:\...» —
+// путь к файлам берём через fileURLToPath.
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url))
+const mobileRoot = join(repoRoot, 'apps/mobile')
 const allowedRawTextFiles = new Set(['src/components/ThemedText.tsx'])
 
 const skippedDirs = new Set(['node_modules', 'ios', 'android', '.expo'])
@@ -21,8 +24,10 @@ function walk(dir: string): string[] {
 
 describe('mobile font coverage', () => {
   it('routes React Native text through the locale font wrapper', () => {
-    const bypasses = walk(mobileRoot.pathname).flatMap((file) => {
-      const relativePath = relative(mobileRoot.pathname, file)
+    const bypasses = walk(mobileRoot).flatMap((file) => {
+      // На Windows relative даёт обратные слэши, а список исключений —
+      // с прямыми.
+      const relativePath = relative(mobileRoot, file).split(sep).join('/')
       if (allowedRawTextFiles.has(relativePath)) return []
 
       const source = readFileSync(file, 'utf8')
@@ -38,9 +43,9 @@ describe('mobile font coverage', () => {
   })
 
   it('refreshes the Settings language row from saved preference on focus', () => {
-    const settingsSource = readFileSync(join(mobileRoot.pathname, 'app/settings.tsx'), 'utf8')
+    const settingsSource = readFileSync(join(mobileRoot, 'app/settings.tsx'), 'utf8')
     const storageSource = readFileSync(
-      join(mobileRoot.pathname, 'src/lifecycle/localePreferenceStorage.ts'),
+      join(mobileRoot, 'src/lifecycle/localePreferenceStorage.ts'),
       'utf8'
     )
 
@@ -59,13 +64,13 @@ describe('mobile font coverage', () => {
   })
 
   it('keeps shared row text metrics explicit for CJK fonts', () => {
-    const aboutSource = readFileSync(join(mobileRoot.pathname, 'app/about.tsx'), 'utf8')
+    const aboutSource = readFileSync(join(mobileRoot, 'app/about.tsx'), 'utf8')
     const linkRowSource = readFileSync(
-      join(repoRoot.pathname, 'packages/components/src/components/LinkRow/styles.ts'),
+      join(repoRoot, 'packages/components/src/components/LinkRow/styles.ts'),
       'utf8'
     )
     const menuSource = readFileSync(
-      join(repoRoot.pathname, 'packages/components/src/components/Menu/styles.ts'),
+      join(repoRoot, 'packages/components/src/components/Menu/styles.ts'),
       'utf8'
     )
 
@@ -88,7 +93,7 @@ describe('mobile font coverage', () => {
   })
 
   it('returns from the language screen before changing the active i18n language', () => {
-    const languageSource = readFileSync(join(mobileRoot.pathname, 'app/language.tsx'), 'utf8')
+    const languageSource = readFileSync(join(mobileRoot, 'app/language.tsx'), 'utf8')
 
     expect(languageSource).toMatch(/const handleSelect = async \(value: string\) => \{/)
     expect(languageSource).toContain('function scheduleLanguageChange')
@@ -100,7 +105,7 @@ describe('mobile font coverage', () => {
   })
 
   it('renders language picker options with per-locale fonts', () => {
-    const languageSource = readFileSync(join(mobileRoot.pathname, 'app/language.tsx'), 'utf8')
+    const languageSource = readFileSync(join(mobileRoot, 'app/language.tsx'), 'utf8')
 
     expect(languageSource).toContain('getNativeFontFamilyName')
     expect(languageSource).toContain('getLocaleFontFamily')
@@ -110,7 +115,7 @@ describe('mobile font coverage', () => {
   })
 
   it('renders language picker rows through the shared CJK-safe LinkRow', () => {
-    const languageSource = readFileSync(join(mobileRoot.pathname, 'app/language.tsx'), 'utf8')
+    const languageSource = readFileSync(join(mobileRoot, 'app/language.tsx'), 'utf8')
 
     expect(languageSource).toContain('LinkCard')
     expect(languageSource).toContain('LinkRow')
@@ -118,7 +123,7 @@ describe('mobile font coverage', () => {
   })
 
   it('does not send translated back titles to Android native stack headers', () => {
-    const layoutSource = readFileSync(join(mobileRoot.pathname, 'app/_layout.tsx'), 'utf8')
+    const layoutSource = readFileSync(join(mobileRoot, 'app/_layout.tsx'), 'utf8')
     const headerOptionsMatch = layoutSource.match(/function getHeaderOptions\([\s\S]*?\n\}/)?.[0]
 
     expect(layoutSource).toContain('import { Platform')
@@ -128,20 +133,17 @@ describe('mobile font coverage', () => {
   })
 
   it('renders native stack header titles with the active locale font', () => {
-    const layoutSource = readFileSync(join(mobileRoot.pathname, 'app/_layout.tsx'), 'utf8')
+    const layoutSource = readFileSync(join(mobileRoot, 'app/_layout.tsx'), 'utf8')
 
     expect(layoutSource).toContain('function getTitledScreenOptions')
     expect(layoutSource).toMatch(/headerTitleStyle:\s*\{\s*fontFamily:\s*fontFamilyName\s*\}/)
   })
 
   it('registers CJK font weights through Expo and the runtime font loader', () => {
-    const appJson = JSON.parse(readFileSync(join(mobileRoot.pathname, 'app.json'), 'utf8')) as {
+    const appJson = JSON.parse(readFileSync(join(mobileRoot, 'app.json'), 'utf8')) as {
       expo: { plugins: unknown[] }
     }
-    const fontLoaderSource = readFileSync(
-      join(mobileRoot.pathname, 'src/theme/useRuqaFonts.ts'),
-      'utf8'
-    )
+    const fontLoaderSource = readFileSync(join(mobileRoot, 'src/theme/useRuqaFonts.ts'), 'utf8')
 
     const expoFontPlugin = appJson.expo.plugins.find(
       (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-font'

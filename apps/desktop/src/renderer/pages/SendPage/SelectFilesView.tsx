@@ -153,8 +153,8 @@ export function SelectFilesView({ mode = 'files' }: { mode?: SendComposeMode }) 
   }
 
   return (
-    <div className='flex h-full min-h-0 flex-col gap-[34px]'>
-      <div className={hasSelectedFiles ? 'shrink-0' : ''}>
+    <div className='flex h-full min-h-0 flex-col gap-5'>
+      <div className={hasSelectedFiles ? 'shrink-0' : 'flex min-h-0 flex-1 flex-col'}>
         {mode === 'text' ? (
           <Textarea
             placeholder={t('send:actions.typeSnippet')}
@@ -195,6 +195,8 @@ export function SelectFilesView({ mode = 'files' }: { mode?: SendComposeMode }) 
           <>
             <FileDropZone
               description={browseDescription}
+              frameless
+              fill={!hasSelectedFiles}
               hasFiles={hasSelectedFiles}
               isDragging={isDropZoneDragging}
               onClick={() => (splitPicker ? setPickerModalOpen(true) : pick('combined'))}

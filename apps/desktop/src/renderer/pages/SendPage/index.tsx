@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Tabs, TabsList, TabsTrigger } from '@ruqa/components'
-import { SendIcon } from '@ruqa/components/icons'
+import { QrCodeIcon } from '@ruqa/components/icons'
 import { useTranslation } from '@ruqa/locales'
 import {
   clearSenderFlow,
@@ -14,7 +14,7 @@ import {
   useTransferStore,
   type SendComposeMode
 } from '@ruqa/domain'
-import { TransferActionGroup, TransferCardFrame } from '../../components'
+import { NearbyPanel, TransferActionGroup, TransferCardFrame } from '../../components'
 import { PreparingView } from './PreparingView'
 import { SelectFilesView } from './SelectFilesView'
 import { ShareView } from './ShareView'
@@ -36,7 +36,17 @@ export default function SendPage() {
       return <ShareView />
     }
 
-    return <SelectFilesView mode={showTabs ? mode : 'files'} />
+    // Кто рядом — рядом с выбором файлов: на широком окне колонкой справа,
+    // на узком уезжает под файлы. Код и QR остаются запасным путём для тех,
+    // кого поблизости нет.
+    return (
+      <div className='flex h-full min-h-0 flex-col gap-6 min-[1040px]:flex-row min-[1040px]:gap-8'>
+        <div className='flex min-h-0 min-w-0 flex-1 flex-col'>
+          <SelectFilesView mode={showTabs ? mode : 'files'} />
+        </div>
+        <NearbyPanel canSend={hasSelectedFiles} />
+      </div>
+    )
   }
 
   function renderFooter() {
@@ -79,14 +89,16 @@ export default function SendPage() {
           <Button onClick={clearSenderFlow} size='sm' variant='ghost'>
             {t('common:actions.clear')}
           </Button>
+          {/* Главный путь теперь список рядом: туда жмут по устройству. Код и
+              QR остаются для тех, кого поблизости нет, и подпись это говорит. */}
           <Button
             disabled={tooManyFiles}
             onClick={() => void continueShare(selectedFiles)}
             size='sm'
             variant='primary'
-            icon={<SendIcon size={14} />}
+            icon={<QrCodeIcon size={14} />}
           >
-            {t('common:labels.send')}
+            {t('send:actions.showCode')}
           </Button>
         </TransferActionGroup>
       </div>

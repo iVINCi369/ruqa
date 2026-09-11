@@ -1,13 +1,10 @@
 import Constants from 'expo-constants'
 import { Directory, File, Paths } from 'expo-file-system'
 import { useCallback, useEffect, useState } from 'react'
-import { isNewerVersion } from '@ruqa/domain'
+import { fetchLatestRelease, isCacheStale, isNewerVersion } from '@ruqa/domain'
 
 const CACHE_DIR = 'ruqa'
 const CACHE_FILE = 'update-check.json'
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000
-const FETCH_TIMEOUT_MS = 10_000
-const GITHUB_RELEASES_URL = 'https://api.github.com/repos/iVINCi369/altersend/releases/latest'
 
 interface CacheEntry {
   version: string
@@ -19,10 +16,6 @@ function getCacheFile(): File | null {
   const base = Paths.document
   if (!base?.uri) return null
   return new File(new Directory(base, CACHE_DIR), CACHE_FILE)
-}
-
-function isCacheStale(entry: CacheEntry): boolean {
-  return Date.now() - entry.fetchedAt > CACHE_TTL_MS
 }
 
 function readCache(): CacheEntry | null {
@@ -47,31 +40,6 @@ function writeCache(entry: CacheEntry): void {
   } catch {}
 }
 
-async function fetchLatestRelease(): Promise<CacheEntry | null> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
-  try {
-    const res = await fetch(GITHUB_RELEASES_URL, {
-      headers: { 'User-Agent': 'Ruqa' },
-      signal: controller.signal
-    })
-    if (!res.ok) return null
-
-    const json = await res.json()
-    const isStableRelease = !json.draft && !json.prerelease
-    const tag: string = json.tag_name ?? ''
-    const isValidTag = /^v?\d+\.\d+/.test(tag)
-
-    if (!isStableRelease || !isValidTag) return null
-
-    return { version: tag.replace(/^v/, ''), fetchedAt: Date.now() }
-  } catch {
-    return null
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
 export function useUpdateCheck(): { needsUpdate: boolean; dismiss: () => void } {
   const [entry, setEntry] = useState<CacheEntry | null>(null)
 
@@ -83,7 +51,7 @@ export function useUpdateCheck(): { needsUpdate: boolean; dismiss: () => void } 
       if (!current) return
 
       let cached = readCache()
-      if (!cached || isCacheStale(cached)) {
+      if (!cached || isCacheStale(cached.fetchedAt)) {
         const fetched = await fetchLatestRelease()
         if (fetched) {
           const next = { ...fetched, dismissedVersion: cached?.dismissedVersion }

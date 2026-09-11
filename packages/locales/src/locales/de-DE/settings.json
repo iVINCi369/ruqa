@@ -12,6 +12,21 @@
     "dark": "Dunkel",
     "system": "Automatisch"
   },
+  "zoom": {
+    "label": "Oberflächengröße",
+    "description": "Alles größer oder kleiner darstellen",
+    "decrease": "Kleiner",
+    "increase": "Größer"
+  },
+  "lan": {
+    "title": "Geräte in der Nähe",
+    "off": "Aus",
+    "offHint": "Ruqa sucht keine Geräte und beantwortet keine Anfragen",
+    "paired": "Nur gekoppelte",
+    "pairedHint": "Nur Geräte aus deiner Liste dürfen einen Dialog öffnen",
+    "all": "Alle im Netzwerk",
+    "allHint": "Jeder in der Nähe kann eine Übertragung anbieten"
+  },
   "crashReports": {
     "label": "Absturzberichte",
     "description": "Teilen Sie anonyme Absturzdaten, um Ruqa zu verbessern"
@@ -58,9 +73,6 @@
   "rows": {
     "feedback": "Rückmeldung",
     "feedbackHint": "Melden Sie ein Problem oder schlagen Sie eine Funktion vor",
-    "discord": "Discord",
-    "x": "X",
-    "discordHint": "Treten Sie der Community bei",
     "github": "GitHub",
     "sponsor": "Ruqa unterstützen",
     "privacyPolicy": "Datenschutzrichtlinie",

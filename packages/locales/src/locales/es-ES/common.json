@@ -30,7 +30,9 @@
     "add": "Añadir",
     "showMore": "Mostrar más",
     "showLess": "Mostrar menos",
-    "learnMore": "Más información"
+    "learnMore": "Más información",
+    "decline": "Rechazar",
+    "accept": "Aceptar"
   },
   "labels": {
     "settings": "Ajustes",
@@ -47,7 +49,11 @@
     "mobile": "Móvil",
     "send": "Enviar",
     "receive": "Recibir",
-    "connectionCode": "Código de conexión"
+    "connectionCode": "Código de conexión",
+    "nearbyDevice": "Un dispositivo cerca",
+    "onThisNetwork": "En esta red",
+    "directLink": "Directo",
+    "viaRelay": "Por retransmisor"
   },
   "files": {
     "folder": "Carpeta",

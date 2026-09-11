@@ -21,7 +21,16 @@ const IMMEDIATE_METHODS = new Set<TransferMethod>([
   'pauseDownload',
   'testCustomRelay',
   'inviteDevice',
-  'respondToInvite'
+  'respondToInvite',
+  // lanInvite ждёт решения человека до минуты — в общей очереди он встал бы
+  // поперёк всего остального.
+  'lanPeers',
+  'lanVisibility',
+  'lanInvite',
+  'respondToLanInvite',
+  // setLanVisibility при выключении гасит сессию сайдкара: если он ждёт
+  // ответа по приглашению, очередь встанет вместе с ним.
+  'setLanVisibility'
 ])
 
 export function runsWithoutWaiting(method: TransferMethod): boolean {

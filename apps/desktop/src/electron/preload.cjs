@@ -67,6 +67,8 @@ contextBridge.exposeInMainWorld('bridge', {
   },
   setSentryEnabled: (enabled) => ipcRenderer.invoke('sentry:setEnabled', enabled),
   setThemePreference: (preference) => ipcRenderer.invoke('theme:setPreference', preference),
+  getZoom: () => ipcRenderer.invoke('zoom:get'),
+  setZoom: (factor) => ipcRenderer.invoke('zoom:set', factor),
   requestCameraAccess: () => ipcRenderer.invoke('app:requestCameraAccess'),
-  clipboardReadText: () => ipcRenderer.invoke('app:clipboardReadText'),
+  clipboardReadText: () => ipcRenderer.invoke('app:clipboardReadText')
 })

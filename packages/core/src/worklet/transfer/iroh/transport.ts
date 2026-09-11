@@ -82,6 +82,10 @@ export class IrohTransport implements TransferTransport {
       void this.onStream(event.id)
       return
     }
+    if (event.event === 'conn-type') {
+      this.onConnectionType(event)
+      return
+    }
     if (event.event === 'closed' || event.event === 'error') {
       this.dropSession()
     }
@@ -122,7 +126,15 @@ export class IrohTransport implements TransferTransport {
     }
 
     this.callbacks.onPeerConnected(session)
-    this.callbacks.onConnectionType?.(peerKey, 'direct')
+    // Тип соединения не угадываем: сайдкар пришлёт conn-type, когда выберется
+    // путь, и ещё раз, если соединение переедет с релея на прямой.
+  }
+
+  private onConnectionType(event: BridgeEvent): void {
+    const peerKey = event.endpointId ?? this.session?.peerKey
+    if (!peerKey) return
+    if (event.connectionType !== 'direct' && event.connectionType !== 'relay') return
+    this.callbacks.onConnectionType?.(peerKey, event.connectionType)
   }
 
   private async onStream(id: number): Promise<void> {
@@ -130,7 +142,7 @@ export class IrohTransport implements TransferTransport {
     try {
       const stream: BridgeStream = await bridge.attach(id)
       const { header, rest } = await readHeader(stream)
-      const bound: BridgeStream = { socket: stream.socket, rest }
+      const bound: BridgeStream = { socket: stream.socket, rest, reply: stream.reply }
 
       if (header.stream === 'control') {
         this.session?.controlChannel.bind(bound)

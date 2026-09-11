@@ -3,7 +3,7 @@ import { getAppActive } from './effects/appActive'
 import { getTransferDebugMessage, getTransferErrorCode } from './errors'
 import { TRANSFER_ERROR_CODES } from './types'
 import type { SharingStatusEvent } from '../send/draftModel'
-import type { RendererTransferEvent, TransferRPC } from '@ruqa/core'
+import type { LanVisibility, RendererTransferEvent, TransferRPC } from '@ruqa/core'
 
 export interface TransferApi {
   worker: TransferRPC
@@ -27,6 +27,33 @@ export function getTransferApi(): TransferApi {
     )
   }
   return api
+}
+
+/** Поднимает сессию локальной сети в выбранном режиме и забирает первый список. */
+export async function applyLanVisibility(visibility: LanVisibility): Promise<void> {
+  try {
+    const worker = getTransferApi().worker
+    await worker.setLanVisibility({ visibility })
+    dispatchToTransferStore({ type: 'set_lan_visibility', visibility })
+    if (visibility !== 'off') {
+      dispatchToTransferStore({ type: 'set_lan_peers', peers: await worker.lanPeers() })
+    }
+  } catch (error) {
+    reportError('applyLanVisibility', error)
+  }
+}
+
+/** Ответ на приглашение соседа. Отказ дважды подряд — и он замолкает сам. */
+export async function respondToLanInvite(
+  requestId: number,
+  response: 'accepted' | 'declined'
+): Promise<void> {
+  dispatchToTransferStore({ type: 'lan_invite_closed', requestId })
+  try {
+    await getTransferApi().worker.respondToLanInvite({ requestId, response })
+  } catch (error) {
+    reportError('respondToLanInvite', error)
+  }
 }
 
 export async function loadPeers(): Promise<void> {
@@ -100,6 +127,25 @@ function dispatchRendererEvent(event: RendererTransferEvent): void {
           ...(event.totalSize !== undefined ? { totalSize: event.totalSize } : {})
         }
       })
+    case 'lan-peers':
+      return dispatchToTransferStore({ type: 'set_lan_peers', peers: event.peers })
+    case 'lan-invite-received':
+      return dispatchToTransferStore({
+        type: 'lan_invite_received',
+        invite: {
+          requestId: event.requestId,
+          endpointId: event.endpointId,
+          displayName: event.displayName,
+          deviceType: event.deviceType,
+          devicePubkey: event.devicePubkey,
+          topic: event.topic,
+          ...(event.fileCount !== undefined ? { fileCount: event.fileCount } : {}),
+          ...(event.textCount !== undefined ? { textCount: event.textCount } : {}),
+          ...(event.totalSize !== undefined ? { totalSize: event.totalSize } : {})
+        }
+      })
+    case 'lan-invite-expired':
+      return dispatchToTransferStore({ type: 'lan_invite_closed', requestId: event.requestId })
     case 'invite-response-received':
       return dispatchToTransferStore({
         type: 'invite_response_received',

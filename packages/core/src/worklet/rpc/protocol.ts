@@ -1,11 +1,16 @@
 import b4a from 'b4a'
 import type { TransferOffer, PeerControlMessage } from '../transfer/control-channel'
 import type { RememberedPeer } from '../peers/remembered-peer'
+import type { LanPeer } from '../peers/lan-peer'
+import type { LanVisibility } from '../peers/lan-coordinator'
 import type { DeviceSecretInit } from '../identity/device-identity-store'
 import type {
   ErrorEvent,
   InviteReceivedEvent,
   InviteResponseReceivedEvent,
+  LanInviteExpiredEvent,
+  LanInviteReceivedEvent,
+  LanPeersEvent,
   PairingPeerConnectedEvent,
   ReadyEvent,
   RememberConfirmedEvent,
@@ -104,6 +109,28 @@ export interface InviteResponseReply {
   delivered: boolean
 }
 
+export interface LanInviteInput {
+  endpointId: string
+  topic: string
+  fileCount?: number
+  textCount?: number
+  totalSize?: number
+}
+
+export interface LanInviteReply {
+  /** `timeout` — сосед не ответил за минуту: экран мог быть заблокирован. */
+  response: 'accepted' | 'declined' | 'timeout'
+}
+
+export interface LanInviteResponseInput {
+  requestId: number
+  response: 'accepted' | 'declined'
+}
+
+export interface SetLanVisibilityInput {
+  visibility: LanVisibility
+}
+
 export interface RenamePeerInput {
   remoteDevicePubkey: string
   displayName: string
@@ -162,6 +189,9 @@ export type RendererTransferEvent =
   | RememberRequestedEvent
   | InviteReceivedEvent
   | InviteResponseReceivedEvent
+  | LanPeersEvent
+  | LanInviteReceivedEvent
+  | LanInviteExpiredEvent
   | PairingPeerConnectedEvent
   | PeerControlMessage
 export type WorkerTransferEvent = WorkerReadyEvent | RendererTransferEvent
@@ -180,6 +210,11 @@ export interface TransferRPC {
   peersList(): Promise<RememberedPeer[]>
   inviteDevice(input: InviteDeviceInput): Promise<InviteDeviceReply>
   respondToInvite(input: InviteResponseInput): Promise<InviteResponseReply>
+  lanPeers(): LanPeer[]
+  lanVisibility(): LanVisibility
+  setLanVisibility(input: SetLanVisibilityInput): Promise<void>
+  lanInvite(input: LanInviteInput): Promise<LanInviteReply>
+  respondToLanInvite(input: LanInviteResponseInput): Promise<void>
   forgetPeer(pubkey: string): Promise<void>
   renamePeer(input: RenamePeerInput): Promise<RememberedPeer | null>
   initDeviceSecret(init: DeviceSecretInit): Promise<InitDeviceSecretReply>

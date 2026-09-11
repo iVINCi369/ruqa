@@ -17,7 +17,12 @@ export const API = {
     setRelayConfig: 15,
     pauseDownload: 16,
     renamePeer: 17,
-    testCustomRelay: 18
+    testCustomRelay: 18,
+    lanPeers: 19,
+    lanInvite: 20,
+    respondToLanInvite: 21,
+    lanVisibility: 22,
+    setLanVisibility: 23
   },
   channels: {
     event: 100,

@@ -26,14 +26,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iVINCi369/altersend.git"
+    "url": "git+https://github.com/iVINCi369/ruqa.git"
   },
   "author": "Ruqa",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/iVINCi369/altersend/issues"
+    "url": "https://github.com/iVINCi369/ruqa/issues"
   },
-  "homepage": "https://github.com/iVINCi369/altersend#readme",
+  "homepage": "https://github.com/iVINCi369/ruqa#readme",
   "dependencies": {
     "@ruqa/components": "2.0.0",
     "@ruqa/core": "2.0.0",

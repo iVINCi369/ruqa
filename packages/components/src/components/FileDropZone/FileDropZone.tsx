@@ -7,6 +7,10 @@ import { styles } from './styles'
 export interface FileDropZoneProps {
   compact?: boolean
   description?: ReactNode
+  // Без пунктирной карточки — подсказка висит в рабочей области как есть.
+  frameless?: boolean
+  // Занимает всю высоту родителя (имеет смысл вместе с frameless).
+  fill?: boolean
   hasFiles?: boolean
   isDragging?: boolean
   onClick?: () => void
@@ -19,6 +23,8 @@ export interface FileDropZoneProps {
 
 export function FileDropZone({
   description,
+  frameless = false,
+  fill = false,
   hasFiles = false,
   isDragging = false,
   onClick,
@@ -29,7 +35,7 @@ export function FileDropZone({
   title
 }: FileDropZoneProps) {
   return (
-    <DragSurface onDragLeave={onDragLeave} onDragOver={onDragOver} onDrop={onDrop}>
+    <DragSurface fill={fill} onDragLeave={onDragLeave} onDragOver={onDragOver} onDrop={onDrop}>
       <html.div
         aria-disabled={readOnly || undefined}
         onClick={readOnly ? undefined : onClick}
@@ -39,6 +45,9 @@ export function FileDropZone({
           styles.card,
           hasFiles && styles.cardHasFile,
           isDragging && styles.cardActive,
+          frameless && styles.cardFrameless,
+          frameless && isDragging && styles.cardFramelessActive,
+          fill && styles.cardFill,
           readOnly && styles.cardReadOnly
         ]}
       >

@@ -32,7 +32,8 @@
     "sendTexts_one": "Отправить {{count}} текст",
     "sendTexts_other": "Отправить {{count}} текста",
     "sendItems_one": "Отправить {{count}} элемент",
-    "sendItems_other": "Отправить {{count}} элемента"
+    "sendItems_other": "Отправить {{count}} элемента",
+    "showCode": "Показать код"
   },
   "status": {
     "waitingForPeer": "Ожидание собеседника",
@@ -116,5 +117,14 @@
     "removeLabel": "Удалить {{name}}",
     "addedText": "Добавленный текст",
     "tooMany": "Слишком много файлов. Сначала упакуйте их в архив."
+  },
+  "nearby": {
+    "title": "Рядом",
+    "searching": "Ищем устройства в этой сети…",
+    "off": "Поиск выключен — включите его в настройках связи",
+    "selectFirst": "Сначала выберите файлы",
+    "accepted": "Принято",
+    "declined": "Отклонено",
+    "noAnswer": "Нет ответа"
   }
 }

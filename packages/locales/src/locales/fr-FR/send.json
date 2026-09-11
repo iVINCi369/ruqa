@@ -32,7 +32,8 @@
     "sendTexts_one": "Envoyer {{count}} texte",
     "sendTexts_other": "Envoyer {{count}} textes",
     "sendItems_one": "Envoyer {{count}} élément",
-    "sendItems_other": "Envoyer {{count}} éléments"
+    "sendItems_other": "Envoyer {{count}} éléments",
+    "showCode": "Afficher un code"
   },
   "status": {
     "waitingForPeer": "En attente du destinataire",
@@ -116,5 +117,14 @@
     "removeLabel": "Supprimer {{name}}",
     "addedText": "Texte ajouté",
     "tooMany": "Trop de fichiers à envoyer. Compressez-les d'abord dans une archive."
+  },
+  "nearby": {
+    "title": "À proximité",
+    "searching": "Recherche d’appareils sur ce réseau…",
+    "off": "La détection est désactivée — activez-la dans les réglages de connexion",
+    "selectFirst": "Choisissez d’abord des fichiers",
+    "accepted": "Accepté",
+    "declined": "Refusé",
+    "noAnswer": "Pas de réponse"
   }
 }
