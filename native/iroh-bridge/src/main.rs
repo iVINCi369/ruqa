@@ -44,6 +44,9 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{Mutex, broadcast, watch};
 
 const ALPN: &[u8] = b"ruqa/drive/1";
+/// Сколько раз гость пробует connect, прежде чем сообщить об ошибке
+/// (каждая попытка сама ждёт до ~30 с).
+const GUEST_CONNECT_ATTEMPTS: u32 = 3;
 const BINDING_LABEL: &[u8] = b"ruqa/channel-binding";
 
 struct Args {
@@ -394,21 +397,36 @@ async fn join(
             } else {
                 EndpointAddr::from_parts(host_id, hints.into_iter().map(TransportAddr::Ip))
             };
-            match ep.connect(target, ALPN).await {
-                Ok(conn) => {
-                    announce_peer(&events, &session, &conn, "out");
-                    spawn_path_watcher(events.clone(), session.clone(), conn.clone());
-                    let _ = conn_tx.send(Some(conn));
+            // Хост публикует запись в pkarr/DNS не мгновенно: если гость ввёл
+            // код раньше, чем запись дошла, первый connect отвалится через 30 с
+            // с «timed out». Не сдаёмся сразу — несколько попыток подряд, а
+            // `leave` (закрытый Endpoint) прерывает цикл ошибкой connect'а.
+            let mut last_err = None;
+            for attempt in 1..=GUEST_CONNECT_ATTEMPTS {
+                if ep.is_closed() {
+                    return;
                 }
-                Err(e) => {
-                    let _ = events.send(
-                        serde_json::json!({
-                            "event": "error", "session": session, "message": e.to_string()
-                        })
-                        .to_string(),
-                    );
+                match ep.connect(target.clone(), ALPN).await {
+                    Ok(conn) => {
+                        announce_peer(&events, &session, &conn, "out");
+                        spawn_path_watcher(events.clone(), session.clone(), conn.clone());
+                        let _ = conn_tx.send(Some(conn));
+                        return;
+                    }
+                    Err(e) => {
+                        eprintln!("connect attempt {attempt}/{GUEST_CONNECT_ATTEMPTS} failed: {e:#}");
+                        last_err = Some(e);
+                    }
                 }
             }
+            let _ = events.send(
+                serde_json::json!({
+                    "event": "error",
+                    "session": session,
+                    "message": last_err.map(|e| e.to_string()).unwrap_or_default(),
+                })
+                .to_string(),
+            );
         });
     }
 
