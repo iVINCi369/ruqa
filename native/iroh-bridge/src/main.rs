@@ -227,22 +227,26 @@ fn spawn_path_watcher(events: broadcast::Sender<String>, session: String, conn: 
         let mut paths = conn.paths_stream();
 
         while let Some(snapshot) = paths.next().await {
-            let kind = match snapshot.iter().find(|path| path.is_selected()) {
-                Some(path) if path.is_relay() => "relay",
-                Some(_) => "direct",
-                // Выбранного пути ещё нет — сказать нечего, ждём следующий снимок.
-                None => continue,
+            // Выбранного пути ещё нет — сказать нечего, ждём следующий снимок.
+            let Some(path) = snapshot.iter().find(|path| path.is_selected()) else {
+                continue;
             };
+            let kind = if path.is_relay() { "relay" } else { "direct" };
             if last == Some(kind) {
                 continue;
             }
             last = Some(kind);
+            // Адрес пути нужен, чтобы отличить честную пробивку NAT от «прямого»
+            // пути через тейлнет или локальную сеть, — по одному слову «direct»
+            // этого не видно.
             let _ = events.send(
                 serde_json::json!({
                     "event": "conn-type",
                     "session": session,
                     "endpointId": endpoint_id,
                     "connectionType": kind,
+                    "remoteAddr": path.remote_addr().to_string(),
+                    "rttMs": path.rtt().as_millis(),
                 })
                 .to_string(),
             );

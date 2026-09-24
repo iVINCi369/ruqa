@@ -6,6 +6,7 @@
   },
   "icon": "build/icon.png",
   "asar": false,
+  "publish": null,
   "directories": {
     "output": "out"
   },

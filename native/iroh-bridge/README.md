@@ -58,6 +58,10 @@ TCP на 127.0.0.1, первая строка от клиента — JSON, от
 | `{"op":"open"}`                                                | открыть новый bi-stream к пиру                                                                                      |
 | `{"op":"attach","id":N}`                                       | принять входящий bi-stream N                                                                                        |
 
+Событие `conn-type` кроме `connectionType` (`relay` | `direct`) несёт `remoteAddr`
+выбранного пути и `rttMs`: по одному слову «direct» не отличить честную пробивку
+NAT от пути через тейлнет или локальную сеть.
+
 Событие `peer` несёт `binding` — экспортированный keying material соединения,
 аналог `handshakeHash` у Noise-сокета hyperswarm, используется для привязки
 канала при спаривании устройств.
@@ -68,3 +72,18 @@ Join-код напрямую становится секретным ключо�
 EndpointId из кода без обмена. В продакшене так нельзя: владелец кода может
 представиться хостом. Нужен HKDF от кода плюс `topic-auth`, который в
 репозитории уже есть.
+
+## Проверка между двумя машинами
+
+`tools/nat-probe.py` гоняет сайдкар без приложения: поднимает мост, делает join
+и шлёт данные одним bi-stream'ом, печатая все события с таймингом. Хост на
+одной машине, гость на другой, topic одинаковый:
+
+```sh
+python3 tools/nat-probe.py --bin ./iroh-bridge --role host  --topic <64 hex>
+python3 tools/nat-probe.py --bin ./iroh-bridge --role guest --topic <64 hex> --mb 32
+```
+
+Если обе машины в одном тейлнете, «direct» будет через него — на время теста
+режь UDP на `tailscale0` (`iptables -I INPUT -i tailscale0 -p udp -j DROP`,
+то же для OUTPUT) и смотри `remoteAddr`.
