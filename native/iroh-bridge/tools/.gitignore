@@ -1,3 +1,4 @@
 *.log
 *.cmd
 iroh-bridge-linux-*
+*.ps1

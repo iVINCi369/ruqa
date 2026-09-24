@@ -12,8 +12,9 @@ import { isWindows } from 'which-runtime'
  * Главный процесс поднимает отдельный бинарник и передаёт воркл ету порт его
  * локального моста через `--iroh-bridge=`.
  *
- * Выключено по умолчанию: без флага `--iroh` (или RUQA_IROH=1) приложение
- * работает ровно как раньше, на одном hyperswarm.
+ * Включён по умолчанию: на нём держится радар соседей (главный экран) и
+ * второй транспорт. `--no-iroh` (или RUQA_IROH=0) выключает сайдкар, и
+ * приложение работает на одном hyperswarm, без соседей в сети.
  */
 
 const READY_TIMEOUT_MS = 10000
@@ -57,7 +58,8 @@ function pickFreePort(): Promise<number> {
 }
 
 export function irohRequested(cliArgs: string[]): boolean {
-  return cliArgs.includes('--iroh') || process.env.RUQA_IROH === '1'
+  if (cliArgs.includes('--no-iroh') || process.env.RUQA_IROH === '0') return false
+  return true
 }
 
 export function getIrohBridgePort(): number | null {
