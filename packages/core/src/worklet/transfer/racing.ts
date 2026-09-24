@@ -93,11 +93,13 @@ export class RacingTransport implements TransferTransport {
     return this.winner ? [this.winner] : this.lanes
   }
 
-  generateKey(): string {
+  async generateKey(): Promise<string> {
     if (this.topicHex && this.mode === 'host') return this.topicHex
     // Код генерирует первая дорожка, остальные подхватывают его же: у всех
     // транспортов один join-код, иначе пользователю пришлось бы выбирать.
-    const topicHex = this.lanes[0].generateKey()
+    // Первой обязана стоять iroh: её код — публичный ключ хоста, чужой код
+    // она хостить не может, а hyperswarm'у всё равно, что взять темой.
+    const topicHex = await this.lanes[0].generateKey()
     this.topicHex = topicHex
     this.mode = 'host'
     for (const lane of this.lanes.slice(1)) {

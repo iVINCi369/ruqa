@@ -63,7 +63,7 @@ export class PairingCoordinator {
   }
 
   async host(): Promise<HostReply> {
-    const topic = this.swarm.generateKey()
+    const topic = await this.swarm.generateKey()
     this.topic = topic
     this.isMine = false
     return { topic }

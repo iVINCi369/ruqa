@@ -211,12 +211,12 @@ export class TransferSwarm implements TransferTransport {
     }
   }
 
-  generateKey(): string {
+  async generateKey(): Promise<string> {
     if (this.hostedTopicHex) {
       return this.hostedTopicHex
     }
     const topicHex = b4a.toString(crypto.randomBytes(32), 'hex')
-    void this.host(topicHex)
+    await this.host(topicHex)
     return topicHex
   }
 

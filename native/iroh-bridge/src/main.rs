@@ -6,7 +6,8 @@
 //!
 //! Протокол моста (TCP, 127.0.0.1), первая строка от клиента — JSON:
 //!   {"op":"control"}                        — канал событий
-//!   {"op":"join","topic":hex,"role":"host"} — начать хостить код
+//!   {"op":"join","role":"host"}             — поднять хост; ответ несёт код
+//!   {"op":"join","topic":hex,"role":"host"} — снова хостить свой прежний код
 //!   {"op":"join","topic":hex,"role":"guest"}— подключиться к коду
 //!   {"op":"leave"}                          — закрыть Endpoint
 //!   {"op":"open"}                           — открыть новый bi-stream к пиру
@@ -75,16 +76,21 @@ fn parse_args() -> Result<Args> {
     Ok(a)
 }
 
-/// Метка домена для ключа хоста: отделяет его от самого join-кода.
-const HOST_KEY_CONTEXT: &[u8] = b"ruqa-iroh-host-v1";
+/// Join-код — это ПУБЛИЧНЫЙ ключ хоста (EndpointId, 32 байта, 64 hex).
+///
+/// Секретный ключ хост генерирует случайно на каждый код и никому не отдаёт,
+/// поэтому знание кода не даёт возможности хостом притвориться: гость
+/// подключается к EndpointId из кода, а TLS у iroh проверяет, что на другом
+/// конце владелец этого ключа. Разбор в claude/join-code-identity.md.
+///
+/// Секреты живут в памяти процесса: транспорт может «перехостить» тот же код
+/// после обрыва (rearm в RacingTransport), и личность при этом обязана
+/// остаться прежней.
+type HostKeys = Arc<Mutex<HashMap<String, SecretKey>>>;
 
-/// Ключ хоста из join-кода: blake3(метка || код).
-fn derive_host_secret(topic: &str) -> Result<SecretKey> {
-    let raw = hex_to_bytes(topic)?;
-    let mut hasher = blake3::Hasher::new();
-    hasher.update(HOST_KEY_CONTEXT);
-    hasher.update(&raw);
-    Ok(SecretKey::from_bytes(hasher.finalize().as_bytes()))
+fn parse_endpoint_id(s: &str) -> Result<iroh::EndpointId> {
+    let raw = hex_to_bytes(s)?;
+    iroh::EndpointId::from_bytes(&raw).map_err(|e| anyhow!("bad join code: {e}"))
 }
 
 fn hex_to_bytes(s: &str) -> Result<[u8; 32]> {
@@ -136,6 +142,7 @@ async fn main() -> Result<()> {
     let args = parse_args()?;
     let (events_tx, _) = broadcast::channel::<String>(256);
     let node: Shared = Arc::new(Mutex::new(HashMap::new()));
+    let host_keys: HostKeys = Arc::new(Mutex::new(HashMap::new()));
     let lan_state: lan::SharedLan = Arc::new(Mutex::new(None));
 
     let bridge = TcpListener::bind(("127.0.0.1", args.bridge_port)).await?;
@@ -156,10 +163,11 @@ async fn main() -> Result<()> {
         let (sock, _) = bridge.accept().await?;
         let events_tx = events_tx.clone();
         let node = node.clone();
+        let host_keys = host_keys.clone();
         let lan_state = lan_state.clone();
         let cfg = cfg.clone();
         tokio::spawn(async move {
-            if let Err(e) = handle_bridge(sock, events_tx, node, lan_state, cfg).await {
+            if let Err(e) = handle_bridge(sock, events_tx, node, host_keys, lan_state, cfg).await {
                 eprintln!("bridge conn error: {e:#}");
             }
         });
@@ -315,28 +323,35 @@ fn spawn_stream_acceptor(
 async fn join(
     cfg: &Args,
     node: &Shared,
+    host_keys: &HostKeys,
     events: &broadcast::Sender<String>,
     session: &str,
-    topic: &str,
+    topic: Option<&str>,
     role: &str,
     hints: Vec<std::net::SocketAddr>,
 ) -> Result<serde_json::Value> {
     leave(node, Some(session)).await;
 
-    // Ключ хоста выводится из join-кода хешем с меткой, а не берётся из кода
-    // напрямую: один и тот же секрет в двух разных ролях — плохая идея, и
-    // утечка одного не должна раскрывать другой.
-    //
-    // ВНИМАНИЕ, это не решает главного: личность хоста всё ещё выводима из
-    // кода, поэтому любой, кто код увидел (подсмотрел QR, получил скриншот),
-    // может поднять Endpoint с той же личностью и принять гостя вместо хоста.
-    // Лечится только тем, что код несёт ПУБЛИЧНЫЙ ключ хоста, а секретный
-    // хост генерирует случайно, — а это смена смысла кода и порядка его
-    // выдачи. Разбор в claude/join-code-identity.md.
-    let host_secret = derive_host_secret(topic)?;
-    let host_id = host_secret.public();
-
-    let secret = if role == "host" { host_secret } else { SecretKey::generate() };
+    // Хост: код без topic — новая случайная личность, код = её публичный ключ;
+    // с topic — повторный хостинг своего же кода той же личностью.
+    // Гость: topic — это EndpointId хоста, к нему и подключаемся.
+    let (secret, host_id) = if role == "host" {
+        let secret = match topic {
+            None => SecretKey::generate(),
+            Some(code) => host_keys
+                .lock()
+                .await
+                .get(code)
+                .cloned()
+                .ok_or_else(|| anyhow!("unknown host code: it was not generated here"))?,
+        };
+        let id = secret.public();
+        host_keys.lock().await.insert(id.to_string(), secret.clone());
+        (secret, id)
+    } else {
+        let code = topic.context("guest join needs topic")?;
+        (SecretKey::generate(), parse_endpoint_id(code)?)
+    };
     let endpoint = build_endpoint(cfg, secret).await?;
     let addrs = local_addrs(&endpoint).await;
 
@@ -423,6 +438,7 @@ async fn handle_bridge(
     sock: TcpStream,
     events_tx: broadcast::Sender<String>,
     node: Shared,
+    host_keys: HostKeys,
     lan_state: lan::SharedLan,
     cfg: Arc<Args>,
 ) -> Result<()> {
@@ -445,7 +461,7 @@ async fn handle_bridge(
             Ok(())
         }
         "join" => {
-            let topic = req["topic"].as_str().context("join needs topic")?;
+            let topic = req["topic"].as_str();
             let role = req["role"].as_str().unwrap_or("guest");
             let addrs: Vec<std::net::SocketAddr> = req["addrs"]
                 .as_array()
@@ -456,7 +472,8 @@ async fn handle_bridge(
                         .collect()
                 })
                 .unwrap_or_default();
-            let reply = join(&cfg, &node, &events_tx, &session_of(&req), topic, role, addrs).await?;
+            let reply = join(&cfg, &node, &host_keys, &events_tx, &session_of(&req), topic, role, addrs)
+                .await?;
             w.write_all(reply.to_string().as_bytes()).await?;
             w.write_all(b"\n").await?;
             Ok(())

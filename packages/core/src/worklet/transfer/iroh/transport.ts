@@ -1,5 +1,4 @@
 import b4a from 'b4a'
-import crypto from 'hypercore-crypto'
 import type { PeerControlMessage } from '../control-channel'
 import type { TransferTransport, TransferTransportCallbacks, TransportSession } from '../transport'
 import { IrohBridge, readHeader, type BridgeEvent, type BridgeStream } from './bridge'
@@ -58,7 +57,12 @@ export class IrohTransport implements TransferTransport {
     return this.bridge
   }
 
-  private async start(topicHex: string, role: 'host' | 'guest'): Promise<void> {
+  /**
+   * `topicHex === null` — хост поднимает новую личность, и код (её публичный
+   * ключ) приходит в ответе сайдкара. Хост с известным кодом — повторный
+   * хостинг своей же личности, сайдкар помнит её секрет.
+   */
+  private async start(topicHex: string | null, role: 'host' | 'guest'): Promise<string> {
     const bridge = this.ensureBridge()
     this.role = role
     await bridge.connectEvents()
@@ -70,7 +74,12 @@ export class IrohTransport implements TransferTransport {
     }
     // История прошлой сессии больше не нужна, а её id стримов уже мертвы.
     bridge.forgetHistory()
-    await bridge.command({ op: 'join', topic: topicHex, role })
+    const reply = await bridge.request(
+      topicHex === null ? { op: 'join', role } : { op: 'join', topic: topicHex, role }
+    )
+    const endpointId = reply.endpointId
+    if (typeof endpointId !== 'string') throw new Error('сайдкар не вернул endpointId на join')
+    return endpointId
   }
 
   private onBridgeEvent(event: BridgeEvent): void {
@@ -167,11 +176,14 @@ export class IrohTransport implements TransferTransport {
     this.callbacks.onPeerDisconnected(session.peerKey, 0)
   }
 
-  generateKey(): string {
+  /**
+   * Join-код у iroh — публичный ключ хоста: секрет сайдкар генерирует сам и
+   * не отдаёт, поэтому подсмотревший код не может выдать себя за хоста.
+   */
+  async generateKey(): Promise<string> {
     if (this.hostedTopicHex) return this.hostedTopicHex
-    const topicHex = b4a.toString(crypto.randomBytes(32), 'hex')
+    const topicHex = await this.start(null, 'host')
     this.hostedTopicHex = topicHex
-    void this.host(topicHex)
     return topicHex
   }
 

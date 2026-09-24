@@ -5,8 +5,6 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
-# Уже в дереве зависимостей iroh; объявляем явно ради вывода ключа хоста.
-blake3 = "1"
 futures-lite = "2.6.1"
 iroh = "1.1.0"
 iroh-mdns-address-lookup = "0.5.0"

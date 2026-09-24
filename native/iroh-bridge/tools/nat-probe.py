@@ -6,8 +6,11 @@ bi-stream'ом: гость шлёт заголовок (8 байт, длина) 
 читает ровно столько, отвечает строкой sha256 и закрывает стрим. Печатает
 все события моста с таймингом — главное здесь `conn-type` (relay / direct).
 
-  хост:  nat-probe.py --bin ./iroh-bridge --role host  --topic <64 hex>
-  гость: nat-probe.py --bin ./iroh-bridge --role guest --topic <64 hex> [--mb 32] [--addrs ip:port,...]
+  хост:  nat-probe.py --bin ./iroh-bridge --role host          → печатает КОД (свой EndpointId)
+  гость: nat-probe.py --bin ./iroh-bridge --role guest --topic <КОД> [--mb 32] [--addrs ip:port,...]
+
+Код — публичный ключ хоста, он появляется только после подъёма Endpoint'а,
+поэтому хост стартует первым.
 
 Только стандартная библиотека: одинаково работает на Windows и на VPS.
 """
@@ -97,7 +100,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bin", required=True)
     ap.add_argument("--role", choices=["host", "guest"], required=True)
-    ap.add_argument("--topic", required=True, help="32 байта hex, одинаковый на обеих сторонах")
+    ap.add_argument("--topic", help="код хоста (его EndpointId, 64 hex); хосту не нужен")
     ap.add_argument("--addrs", default="", help="известные адреса хоста ip:port через запятую")
     ap.add_argument("--mb", type=int, default=32)
     ap.add_argument("--timeout", type=int, default=120, help="ожидание пира, с")
@@ -121,11 +124,17 @@ def main():
 
     try:
         events = Events(port)
-        join = {"op": "join", "topic": a.topic, "role": a.role}
+        join = {"op": "join", "role": a.role}
+        if a.topic:
+            join["topic"] = a.topic
+        elif a.role == "guest":
+            ap.error("гостю нужен --topic")
         if a.addrs:
             join["addrs"] = [x.strip() for x in a.addrs.split(",") if x.strip()]
         _, _, reply = request(port, join)
         log(f"join {a.role}: endpointId={reply['endpointId']} addrs={reply['addrs']}")
+        if a.role == "host":
+            log(f"КОД: {reply['endpointId']}")
 
         t_join = time.monotonic()
         peer = events.wait("peer", a.timeout)

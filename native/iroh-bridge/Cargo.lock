@@ -1283,7 +1283,6 @@ name = "iroh-bridge"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "blake3",
  "futures-lite",
  "iroh",
  "iroh-mdns-address-lookup",
